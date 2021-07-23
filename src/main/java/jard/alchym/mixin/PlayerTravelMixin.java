@@ -84,7 +84,7 @@ public abstract class PlayerTravelMixin extends LivingEntity {
         Vec3d wishDir = MovementHelper.getWishDir (player.getYaw (0.f), movementIn);
 
         if (quakeMovement (player, wishDir)) {
-            Vec3d preSkimVel = player.getVelocity ();
+            Vec3d preSkimVel = player.getVelocity ().multiply (1.0, 0.0, 1.0);
 
             if (isOnGround () && ! wasOnGround)
                 skimTimer = 5;
@@ -94,8 +94,8 @@ public abstract class PlayerTravelMixin extends LivingEntity {
 
             player.move (MovementType.SELF, player.getVelocity ());
 
-            if (player.isOnGround ())
-                preSkimVel = preSkimVel.multiply (1.f, 0.f, 1.f);
+            if (! player.isOnGround ())
+                preSkimVel = preSkimVel.add (0.0, player.getVelocity ().y, 0.0);
 
             if (0 < skimTimer && skimTimer <= 5)
                 player.setVelocity (preSkimVel);
