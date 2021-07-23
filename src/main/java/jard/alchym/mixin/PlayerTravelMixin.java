@@ -34,12 +34,11 @@ public abstract class PlayerTravelMixin extends LivingEntity {
     private static final float STOPSPEED                  = MovementHelper.upsToSpt (320.f);
     private static final float AIRSPEED                   = MovementHelper.upsToSpt (240.f);
     private static final float AIRSTRAFE_SPEED            = MovementHelper.upsToSpt (40.f);
-    private static final float CROUCH_SLIDE_MIN_SPEED     = MovementHelper.upsToSpt (415.f);
     private static final float GRAPPLE_PULL_MAX_SPEED     = MovementHelper.upsToSpt (960.f);
 
     private static final float GROUND_ACCEL               = 9.5f  / 20.f;
-    private static final float AIR_ACCEL                  = 0.5f  / 20.f;
-    private static final float AIRSTRAFE_ACCEL            = 10.0f / 20.f;
+    private static final float AIR_ACCEL                  = 1.0f  / 20.f;
+    private static final float AIRSTRAFE_ACCEL            = 15.0f / 20.f;
     private static final float FRICTION                   = 3.5f  / 20.f;
 
     private static final float GRAPPLE_RESTRAINMENT_ACCEL = 0.5f  / 20.f;
@@ -138,7 +137,7 @@ public abstract class PlayerTravelMixin extends LivingEntity {
 
     @Inject (method = "clipAtLedge", at = @At ("HEAD"), cancellable = true)
     public void dontClipOnLedgeIfSliding (CallbackInfoReturnable <Boolean> info) {
-        if (isSneaking () && getVelocity ().multiply (1.f, 0.f, 1.f).length () >= CROUCH_SLIDE_MIN_SPEED) {
+        if (isSneaking () && getVelocity ().multiply (1.f, 0.f, 1.f).length () >= WALKSPEED) {
             info.setReturnValue (false);
             info.cancel ();
         }
@@ -175,14 +174,14 @@ public abstract class PlayerTravelMixin extends LivingEntity {
             frictionSpeed *= 0.25f;
         }
 
-        if (player.isSneaking () && getVelocity ().multiply (1.f, 0.f, 1.f).length () >= CROUCH_SLIDE_MIN_SPEED) {
+        if (player.isSneaking () && getVelocity ().multiply (1.f, 0.f, 1.f).length () >= WALKSPEED) {
             double yStep = stepTracker [0].y;
             if (yStep > MathHelper.FLOAT_ZERO_THRESHOLD && yStep <= player.stepHeight) {
                 skimTimer = 5;
                 rampslideTimer = 5;
             } else if (skimTimer == 0 || skimTimer >= 5)
                 skimTimer = 6;
-            frictionAccel *= 0.05f;
+            frictionAccel *= 0.025f;
             walkSpeed = AIRSPEED;
             accel = AIR_ACCEL;
         }
@@ -197,7 +196,17 @@ public abstract class PlayerTravelMixin extends LivingEntity {
 
         player.addVelocity (0.f, -0.0784f, 0.f);
 
+
+        double prevSpeed = player.getVelocity ().multiply (1.0, 0.0, 1.0).length ();
+        // Ground move
         MovementHelper.playerAccelerate (player, wishDir, walkSpeed, accel);
+        double currSpeed = player.getVelocity ().multiply (1.0, 0.0, 1.0).length ();
+
+        // Cap speed if the player is sliding
+        if (player.isSneaking () && currSpeed > prevSpeed && currSpeed > WALKSPEED) {
+            double cap = prevSpeed / currSpeed;
+            player.setVelocity (player.getVelocity ().multiply (cap, 1.0, cap));
+        }
     }
 
     private void playerAirMove (ClientPlayerEntity player, Vec3d wishDir) {
@@ -206,13 +215,18 @@ public abstract class PlayerTravelMixin extends LivingEntity {
             return;
         }
 
-        if (player.isSneaking ())
-            MovementHelper.playerFriction (player, FRICTION * 0.05f, STOPSPEED);
+        //if (player.isSneaking ())
+        //    MovementHelper.playerFriction (player, FRICTION * 0.05f, STOPSPEED);
 
+        player.addVelocity (0.f, player.getVelocity ().y > 0.f ? -0.0524f : -0.0784f, 0.f);
+
+        Vec3d prevHorizontalVel = player.getVelocity ().multiply (1.0, 0.0, 1.0);
+        double horizontalSpeed = prevHorizontalVel.length ();
+
+        // Ramp slide
         if (rampslideTimer > 0) {
             Vec3d rampslideDir = getRampslideVector ();
-            double playerSpeed = player.getVelocity ().multiply (1.0, 0.0, 1.0).length ();
-            double addVertSpeed = playerSpeed * rampslideDir.y / rampslideDir.multiply (1.0, 0.0, 1.0).length ();
+            double addVertSpeed = horizontalSpeed * rampslideDir.y / rampslideDir.multiply (1.0, 0.0, 1.0).length ();
 
             player.addVelocity (0.0, addVertSpeed, 0.0);
 
@@ -220,10 +234,27 @@ public abstract class PlayerTravelMixin extends LivingEntity {
             rampslideTimer = 0;
         }
 
-        player.addVelocity (0.f, player.getVelocity ().y > 0.f ? -0.0524f : -0.0784f, 0.f);
-
+        /* Apply strafe accel with diminishing strength if player is traveling over the walk speed
+         *
+         * This should give strafe that reaches a soft cap (from testing, roughly 762 UPS), which allows players to
+         * gain appreciable speed through strafing skill, but not to where strafing completely dominates the speed meta.
+         *
+         * Knockback weapons are necessary to attain speeds higher than the soft cap by design.
+         */
+        // VQ3
         MovementHelper.playerAccelerate (player, wishDir, AIRSPEED, AIR_ACCEL);
+        // QW
         MovementHelper.playerAccelerate (player, wishDir, AIRSTRAFE_SPEED, AIRSTRAFE_ACCEL);
+        double newSpeed = player.getVelocity ().multiply (1.0, 0.0, 1.0).lengthSquared ();
+        // Only apply the cap if the player has gained speed
+        if (newSpeed > (horizontalSpeed * horizontalSpeed) && newSpeed > WALKSPEED * WALKSPEED) {
+            double strafePenalty = WALKSPEED * WALKSPEED / newSpeed;
+            Vec3d delta          = player.getVelocity ().multiply (1.0, 0.0, 1.0).subtract (prevHorizontalVel);
+            Vec3d softCappedVel  = prevHorizontalVel.add (delta.multiply (strafePenalty));
+            softCappedVel = softCappedVel.add (0.0, player.getVelocity ().y, 0.0);
+
+            player.setVelocity (softCappedVel);
+        }
     }
 
     private double playerMaintainGrappleLinks (ClientPlayerEntity player, Stack<Vec3d> links) {

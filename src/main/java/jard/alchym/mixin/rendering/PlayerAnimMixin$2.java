@@ -56,7 +56,7 @@ public abstract class PlayerAnimMixin$2 extends LivingEntityRenderer<AbstractCli
 
         if (player.isOnGround () && !((ExtraPlayerDataAccess) player).isJumping () &&
                 player.isSneaking () &&
-                player.getVelocity ().multiply (1.f, 0.f, 1.f).length () > MovementHelper.upsToSpt (415.f)) {
+                player.getVelocity ().multiply (1.f, 0.f, 1.f).length () > MovementHelper.upsToSpt (320.f)) {
             angle = (float) Math.tanh (vel.length () * 1.75) * -12.5f * (float) Math.abs (right.dotProduct (look));
             angle += 22.5f * (float) dot;
             matrixStack.translate (0.f, -0.3f + (0.1f * Math.abs (dot)), 0.f);

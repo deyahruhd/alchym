@@ -84,7 +84,7 @@ public abstract class PlayerAnimMixin$1 <T extends LivingEntity> extends EntityM
 
             if (player.isOnGround () && ! ((ExtraPlayerDataAccess) player).isJumping ()
                     && player.isSneaking ()
-                    && player.getVelocity ().multiply (1.f, 0.f, 1.f).length () >= MovementHelper.upsToSpt (415.f)) {
+                    && player.getVelocity ().multiply (1.f, 0.f, 1.f).length () >= MovementHelper.upsToSpt (320.f)) {
 
                 motionAngle = dot * 22.5;
 
