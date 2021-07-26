@@ -1,3 +1,19 @@
+/*
+ * The following notice pertains to the implementation of `playerGrappleMove` below.
+ *
+ * All Rights Reserved
+ *
+ * Copyright (c) 1996 Perecli Manole
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
 package jard.alchym.mixin;
 
 import jard.alchym.client.ExtraPlayerDataAccess;
@@ -287,6 +303,11 @@ public abstract class PlayerTravelMixin extends LivingEntity {
         return length;
     }
 
+    /*
+     * All Rights Reserved
+     *
+     * Copyright (c) 1996 Perecli Manole
+     */
     private void playerGrappleMove (ClientPlayerEntity player, Vec3d linkPos, double linkMaxLength) {
         Vec3d linkVec = linkPos.subtract (player.getPos ().add (0.f, player.getEyeHeight (player.getPose ()), 0.f));
         double linkLength = linkVec.length ();
