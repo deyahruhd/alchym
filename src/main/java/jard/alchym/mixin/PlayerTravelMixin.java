@@ -47,10 +47,9 @@ public abstract class PlayerTravelMixin extends LivingEntity {
     private static final float GRAPPLE_LINK_WIDTH         = 0.1f;
 
     private static boolean wasOnGround = true;
-    private static Vec3d [] stepTracker = { Vec3d.ZERO, Vec3d.ZERO, Vec3d.ZERO, Vec3d.ZERO, Vec3d.ZERO };
-    private static int skimTimer      = 0;
-    private static int gbTimer        = 0;
-    private static int rampslideTimer = 0;
+    private static Vec3d displacement  = Vec3d.ZERO;
+    private static int skimTimer       = 0;
+    private static int gbTimer         = 0;
 
     @Shadow
     @Final
@@ -102,18 +101,9 @@ public abstract class PlayerTravelMixin extends LivingEntity {
         } else
             super.travel(wishDir);
 
-        Vec3d step = getPos ().subtract (prevPos);
+        displacement = getPos ().subtract (prevPos);
 
-        increaseTravelMotionStats (step.x, step.y, step.z);
-
-        // Shift over all step variables
-        for (int i = 0; i < 4; ++ i) {
-            stepTracker [i + 1] = stepTracker [i];
-        }
-        if (player.isOnGround ())
-            stepTracker [0] = step;
-        else
-            stepTracker [0] = Vec3d.ZERO;
+        increaseTravelMotionStats (displacement.x, displacement.y, displacement.z);
 
         // Move limbs
         method_29242 (this, this instanceof Flutterer);
@@ -123,9 +113,6 @@ public abstract class PlayerTravelMixin extends LivingEntity {
 
         if (gbTimer > 0)
             gbTimer --;
-
-        if (rampslideTimer > 0)
-            rampslideTimer --;
 
         info.cancel ();
     }
@@ -175,10 +162,9 @@ public abstract class PlayerTravelMixin extends LivingEntity {
         }
 
         if (player.isSneaking () && getVelocity ().multiply (1.f, 0.f, 1.f).length () >= WALKSPEED) {
-            double yStep = stepTracker [0].y;
+            double yStep = displacement.y;
             if (yStep > MathHelper.FLOAT_ZERO_THRESHOLD && yStep <= player.stepHeight) {
                 skimTimer = 5;
-                rampslideTimer = 5;
             } else if (skimTimer == 0 || skimTimer >= 5)
                 skimTimer = 6;
             frictionAccel *= 0.025f;
@@ -222,17 +208,6 @@ public abstract class PlayerTravelMixin extends LivingEntity {
 
         Vec3d prevHorizontalVel = player.getVelocity ().multiply (1.0, 0.0, 1.0);
         double horizontalSpeed = prevHorizontalVel.length ();
-
-        // Ramp slide
-        if (rampslideTimer > 0) {
-            Vec3d rampslideDir = getRampslideVector ();
-            double addVertSpeed = horizontalSpeed * rampslideDir.y / rampslideDir.multiply (1.0, 0.0, 1.0).length ();
-
-            player.addVelocity (0.0, addVertSpeed, 0.0);
-
-            skimTimer = 5;
-            rampslideTimer = 0;
-        }
 
         /* Apply strafe accel with diminishing strength if player is traveling over the walk speed
          *
@@ -342,14 +317,5 @@ public abstract class PlayerTravelMixin extends LivingEntity {
         Vec3d grappleRestrain = linkVec.normalize ().multiply (restrainment);
 
         player.addVelocity (grappleRestrain.x, grappleRestrain.y, grappleRestrain.z);
-    }
-
-    private Vec3d getRampslideVector () {
-        Vec3d sum = Vec3d.ZERO;
-        for (int i = 0; i < 5; ++ i) {
-            sum = sum.add (stepTracker [i].multiply (0.2));
-        }
-
-        return sum;
     }
 }
