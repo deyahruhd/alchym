@@ -81,7 +81,9 @@ public class InitBookPages {
                 List <Vec3i> takenPositions = new ArrayList<> ();
 
                 for (NavigatorPage.NavigatorNode node : stub.nodes) {
-                    System.out.println ("    Looking at " + node.linkTo);
+                    // Round to nearest 0.5
+                    node.x = Math.round (node.x * 2.0) / 2.0;
+                    node.y = Math.round (node.y * 2.0) / 2.0;
 
                     Vec3i pos = new Vec3i (node.x, node.y, 0);
 

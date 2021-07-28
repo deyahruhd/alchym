@@ -6,6 +6,7 @@ import jard.alchym.api.ingredient.impl.FluidVolumeIngredient;
 import jard.alchym.api.ingredient.impl.ItemStackIngredient;
 import jard.alchym.api.transmutation.TransmutationInterface;
 import jard.alchym.api.transmutation.impl.WetTransmutationInterface;
+import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
@@ -108,6 +109,7 @@ public class SolutionGroup extends IngredientGroup {
      * @return true if, for every {@linkplain Ingredient} I in {@code this}, there exists some {@linkplain Ingredient} J
      *         supplied by {@code source} such that I ⊆ J.
      */
+    @Override
     public boolean peek (TransmutationInterface source) {
         assert (source instanceof WetTransmutationInterface);
 
@@ -115,7 +117,7 @@ public class SolutionGroup extends IngredientGroup {
 
         // Check if the source of the supplied action has
         for (Ingredient ingredient : contents) {
-            if (! source.peek (ingredient))
+            if (source.peek (ingredient) < ingredient.getAmount ())
                 return false;
 
             // We found an ingredient that exists within a glass container; however wet transmutations can only occur
@@ -167,8 +169,8 @@ public class SolutionGroup extends IngredientGroup {
      * Returns any insoluble {@linkplain Ingredient ingredients} in {@code contents} - an insoluble ingredient is any
      * {@link ItemStackIngredient} without a paired solvent.
      *
-     * This thus implies that any solution with a liquid is assumed to be a valid solution, which is honored by
-     * {@link jard.alchym.blocks.blockentities.GlassContainerBlockEntity}.
+     * This implies that any solution with a liquid is assumed to be a valid solution, which is honored by
+     * {@link ChymicalContainerBlockEntity}.
      *
      * @return a {@link DefaultedList} of {@linkplain ItemStack ItemStacks}
      */

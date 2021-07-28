@@ -1,7 +1,7 @@
 package jard.alchym.init;
 
 import jard.alchym.AlchymReference;
-import jard.alchym.blocks.blockentities.GlassContainerBlockEntity;
+import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.util.registry.Registry;
@@ -19,11 +19,11 @@ public class InitBlockEntities extends InitAbstract <BlockEntityType <?>> {
         super (Registry.BLOCK_ENTITY_TYPE, alchym);
     }
 
-    public final BlockEntityType glassContainerBlockEntity = from (GlassContainerBlockEntity::new);
+    public final BlockEntityType chymicalContainerBlockEntity = from (ChymicalContainerBlockEntity::new);
 
     @Override
     public void initialize () {
-        register (AlchymReference.BlockEntities.GLASS_CONTAINER.getName (), glassContainerBlockEntity);
+        register (AlchymReference.BlockEntities.CHYMICAL_CONTAINER.getName (), chymicalContainerBlockEntity);
     }
     private final BlockEntityType from (Supplier<BlockEntity> blockEntity) {
         return BlockEntityType.Builder.create (blockEntity).build (null);

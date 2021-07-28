@@ -1,7 +1,7 @@
 package jard.alchym.mixin;
 
 import jard.alchym.AlchymReference;
-import jard.alchym.blocks.blockentities.GlassContainerBlockEntity;
+import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
 import jard.alchym.api.ingredient.SolubleIngredient;
 import net.minecraft.fluid.Fluid;
 import org.spongepowered.asm.mixin.Mixin;
@@ -15,13 +15,13 @@ import org.spongepowered.asm.mixin.Mixin;
 @Mixin (Fluid.class)
 public abstract class FluidSolubleMixin implements SolubleIngredient {
     @Override
-    public boolean canInsert (GlassContainerBlockEntity container) {
+    public boolean canInsert (ChymicalContainerBlockEntity container) {
         return getMaterial () != null;
     }
 
     @Override
     public AlchymReference.IMaterial getMaterial () {
-        return AlchymReference.getExistingSpeciesMaterial (this);
+        return AlchymReference.AdditionalMaterials.getExistingSpeciesMaterial (this);
     }
 
     @Override

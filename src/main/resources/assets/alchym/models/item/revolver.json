@@ -1,30 +1,33 @@
 {
-    "parent": "alchym:item/revolver.obj",
+    "model": "alchym:item/revolver.obj",
+    "gui_light": "front",
     "display": {
-        "head": {
-            "rotation": [0, 180, 0],
-            "translation": [0, 13, 7],
-            "scale": [1, 1, 1]
-        },
-        "firstperson_righthand": {
-            "rotation": [0, 0, 0],
-            "translation": [-3.35, 0, 0],
-            "scale": [1, 1, 1]
-        },
-        "firstperson_lefthand": {
-            "rotation": [0, 0, 0],
-            "translation": [-3.35, 0, 0],
-            "scale": [1, 1, 1]
-        },
         "gui": {
             "translation": [1.53, 0.71265, 0],
             "scale": [1.12, 1.12, 1.12],
             "rotation": [-79.877, 46.371, 111.890]
         },
+        "ground": {
+            "translation": [1.53, 0.71265, 0],
+            "scale": [1, 1, 1],
+            "rotation": [-79.877, 46.371, 138.890]
+        },
         "fixed": {
             "rotation": [0, -90, 20.25],
             "translation": [0, 0, 0],
             "scale": [1.12, 1.12, 1.12]
+        },
+        "firstperson_righthand": {
+            "rotation": [0, 0, 2],
+            "translation": [-0.63, 0.0075, 0.325],
+            "scale": [1, 1, 1],
+            "misc": "-8.96 for centered, -0.63 for normal"
+        },
+        "firstperson_lefthand": {
+            "rotation": [0, 0, 2],
+            "translation": [-0.63, 0.0075, 0.325],
+            "scale": [1, 1, 1],
+            "misc": "-8.96 for centered, -0.63 for normal"
         }
     }
 }

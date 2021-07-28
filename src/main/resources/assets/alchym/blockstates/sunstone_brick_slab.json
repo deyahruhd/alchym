@@ -1,0 +1,13 @@
+{
+  "variants": {
+    "type=bottom": {
+      "model": "alchym:block/sunstone_brick_slab"
+    },
+    "type=double": {
+      "model": "alchym:block/sunstone_brick"
+    },
+    "type=top": {
+      "model": "alchym:block/sunstone_brick_slab_top"
+    }
+  }
+}

@@ -2,19 +2,11 @@ package jard.alchym.items;
 
 import jard.alchym.AlchymReference;
 import jard.alchym.api.ingredient.SolubleIngredient;
-import jard.alchym.api.transmutation.ReagentItem;
-import jard.alchym.blocks.blockentities.GlassContainerBlockEntity;
-import jard.alchym.helper.TransmutationHelper;
+import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.TypedActionResult;
-import net.minecraft.world.World;
 
 /***
  *  MaterialItem
@@ -40,14 +32,13 @@ public class MaterialItem extends TransmutableReagentItem implements SolubleIngr
     }
 
     @Override
-    public boolean canInsert (GlassContainerBlockEntity container) {
+    public boolean canInsert (ChymicalContainerBlockEntity container) {
         return  form == AlchymReference.Materials.Forms.POWDER ||
                 form == AlchymReference.Materials.Forms.REAGENT_POWDER ||
-                form == AlchymReference.Materials.Forms.SMALL_POWDER ||
-                form == AlchymReference.Materials.Forms.REAGENT_SMALL_POWDER ||
                 form == AlchymReference.Materials.Forms.NUGGET ||
 
-                (form == AlchymReference.Materials.Forms.INGOT && container.capacity >= AlchymReference.GlassContainers.VAT.capacity);
+                (form == AlchymReference.Materials.Forms.INGOT &&
+                        container.getCapacity () >= AlchymReference.ChymicalContainers.COPPER_CRUCIBLE.capacity);
     }
 
     @Override
@@ -67,17 +58,12 @@ public class MaterialItem extends TransmutableReagentItem implements SolubleIngr
 
     @Override
     public boolean isReagent() {
-        return form == AlchymReference.Materials.Forms.REAGENT_POWDER ||
-               form == AlchymReference.Materials.Forms.REAGENT_SMALL_POWDER;
+        return form == AlchymReference.Materials.Forms.REAGENT_POWDER;
     }
 
     @Override
     public long getUnitCharge() {
-        if (! isReagent ())
-            return 0L;
-        else {
-            return form == AlchymReference.Materials.Forms.REAGENT_POWDER ? 4L : 1L;
-        }
+        return isReagent () ? 1L : 0L;
     }
 
     @Override

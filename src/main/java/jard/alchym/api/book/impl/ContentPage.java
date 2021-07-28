@@ -67,7 +67,7 @@ public class ContentPage extends BookPage {
             // same NavigatorPage
 
             // So, we want to discard the left page's button.
-            if (pageToJump instanceof NavigatorPage && pagesInSequence == 2)
+            if (pageToJump instanceof NavigatorPage && pagesInSequence <= 2)
                 pageToJump = null;
         } else if (side == AlchymReference.PageInfo.BookSide.RIGHT) {
             pageToJump = this.physicalNext ();

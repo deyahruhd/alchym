@@ -52,14 +52,43 @@
       "x": -2,
       "y": 2
     },
+
+
     {
-      "link-to": { "namespace": "alchym", "path": "fundamentals.material_studies.alchymic_steel"},
-      "type": "MINOR",
-      "icon": { "namespace": "alchym", "path": "alchymic_steel_ingot"},
+      "link-to": { "namespace": "alchym", "path": "lab_chymistry"},
+      "type": "MAJOR",
+      "icon": { "namespace": "minecraft", "path": "air"},
       "unlocks": [],
       "hidden": false,
-      "x": -1,
+      "x": 0.5,
+      "y": 0
+    },
+    {
+      "link-to": { "namespace": "alchym", "path": "alchymic_artificing"},
+      "type": "MAJOR",
+      "icon": { "namespace": "minecraft", "path": "air"},
+      "unlocks": [],
+      "hidden": false,
+      "x": 0.5,
+      "y": 1
+    },
+    {
+      "link-to": { "namespace": "alchym", "path": "chymical_spellcasting"},
+      "type": "MAJOR",
+      "icon": { "namespace": "alchym", "path": "revolver"},
+      "unlocks": [],
+      "hidden": false,
+      "x": 0.5,
       "y": 2
+    },
+    {
+      "link-to": { "namespace": "alchym", "path": "alchymic_shadow"},
+      "type": "CAPSTONE",
+      "icon": { "namespace": "minecraft", "path": "air"},
+      "unlocks": [],
+      "hidden": true,
+      "x": 0.5,
+      "y": 3
     }
   ]
 }

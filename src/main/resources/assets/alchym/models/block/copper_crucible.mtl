@@ -1,0 +1,8 @@
+# Blender MTL File: 'copper_crucible.blend'
+# Material Count: 1
+
+newmtl copper_crucible_texture
+map_Kd alchym:block/copper_crucible
+
+newmtl sprite
+map_Kd alchym:block/particle/copper_crucible

@@ -60,7 +60,7 @@ public class RenderHelper {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
         RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
-        stack.translate ((double) i, (double) j, 100.0F);
+        stack.translate (i, j, 2.0F);
         stack.translate (8.0F, 8.0F, 0.0F);
         stack.scale (1.0F, -1.0F, 1.0F);
         stack.scale (16.0F, 16.0F, 16.0F);

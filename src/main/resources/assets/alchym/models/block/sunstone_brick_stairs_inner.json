@@ -1,0 +1,8 @@
+{
+  "parent": "minecraft:block/inner_stairs",
+  "textures": {
+    "bottom": "alchym:block/sunstone_brick",
+    "top": "alchym:block/sunstone_brick",
+    "side": "alchym:block/sunstone_brick"
+  }
+}

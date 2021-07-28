@@ -8,6 +8,8 @@ import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.text.Text;
 
+import java.util.List;
+
 /***
  *  AbstractGuidebookWidget
  *  The abstract widget class used solely by the Alchymic Reference.
@@ -31,4 +33,6 @@ public abstract class AbstractGuidebookWidget extends AbstractPressableButtonWid
         textRenderer = MinecraftClient.getInstance ().textRenderer;
         itemRenderer = MinecraftClient.getInstance ().getItemRenderer ();
     }
+
+    public abstract boolean addTooltip (List<Text> tooltip, double transformX, double transformY, int mouseX, int mouseY);
 }

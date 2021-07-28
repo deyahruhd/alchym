@@ -1,0 +1,8 @@
+{
+  "type": "minecraft:smelting",
+  "ingredient": {
+    "item": "alchym:alchymic_glass_powder"
+  },
+  "result": "alchym:alchymic_glass",
+  "cookingtime": 200
+}

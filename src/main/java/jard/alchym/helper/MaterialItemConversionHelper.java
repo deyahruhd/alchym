@@ -25,8 +25,6 @@ public class MaterialItemConversionHelper {
     }
 
     static {
-        addFormPair (AlchymReference.Materials.Forms.POWDER, AlchymReference.Materials.Forms.SMALL_POWDER);
-        addFormPair (AlchymReference.Materials.Forms.REAGENT_POWDER, AlchymReference.Materials.Forms.REAGENT_SMALL_POWDER);
         addFormPair (AlchymReference.Materials.Forms.INGOT, AlchymReference.Materials.Forms.NUGGET);
     }
 

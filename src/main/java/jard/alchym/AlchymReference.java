@@ -1,15 +1,18 @@
 package jard.alchym;
 
 import jard.alchym.api.ingredient.SolubleIngredient;
+import jard.alchym.api.recipe.TransmutationRecipe;
 import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.minecraft.block.Block;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.fluid.Fluids;
+import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Style;
 import net.minecraft.text.TextColor;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.Rarity;
 import net.minecraft.util.shape.VoxelShape;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -33,10 +36,14 @@ public class AlchymReference {
 
     // Any non-material block should have its definitions placed here.
     public enum Blocks {
-        NITER_BEARING_STONE,
+        NITERROCK,
 
-        VAT_CONTAINER,
-        FLASK_CONTAINER;
+        COPPER_CRUCIBLE,
+        CHYMICAL_ALEMBIC,
+
+        SUNSTONE_BRICK,
+
+        LEAD_ORE;
 
         public String getName () {
             return name ().toLowerCase ();
@@ -44,7 +51,7 @@ public class AlchymReference {
     }
 
     public enum BlockEntities {
-        GLASS_CONTAINER;
+        CHYMICAL_CONTAINER;
 
         public String getName () {
             return name ().toLowerCase ();
@@ -54,13 +61,47 @@ public class AlchymReference {
     // Any non-material item should have its definitions placed here.
     public enum Items {
         ALCHYMIC_REFERENCE,
+
+        CHYMICAL_TUBING,
+        CHYMICAL_FLASK,
+
         REVOLVER,
+        SPEEDLOADER,
+
         PHILOSOPHERS_STONE;
 
         public String getName () {
             return name ().toLowerCase ();
         }
     }
+
+    public static class WorldGen {
+        public enum Features {
+            NITER_DEPOSIT,
+            LEAD_ORES;
+
+            public String getName () {
+                return name ().toLowerCase ();
+            }
+        }
+    }
+
+    public static final Item.Settings DEFAULT_ITEM_SETTINGS = new Item.Settings ()
+            .group (AlchymReference.ALCHYM_GROUP);
+
+    public static final Item.Settings SMALL_GLASSWARE_SETTINGS = new Item.Settings ()
+            .group (AlchymReference.ALCHYM_GROUP).maxCount (100);
+    public static final Item.Settings LARGE_GLASSWARE_SETTINGS = new Item.Settings ()
+            .group (AlchymReference.ALCHYM_GROUP).maxCount (10);
+
+    public static final Item.Settings TOOL_SETTINGS = new Item.Settings ().maxCount(1).maxDamage(0).rarity (Rarity.UNCOMMON)
+            .group (AlchymReference.ALCHYM_GROUP);
+    public static final Item.Settings PHILOSOPHERS_STONE_SETTINGS = new Item.Settings ().group (AlchymReference.ALCHYM_GROUP)
+            .rarity (Rarity.EPIC).maxCount (1);
+    public static final Item.Settings PHILOSOPHERS_STONE_SETTINGS$1 = new Item.Settings ().rarity (Rarity.EPIC)
+            .maxCount (1);
+
+    public static byte ITEM_STACK_LIMIT = 100;
 
     public enum Reagents {
         UNKNOWN,
@@ -75,7 +116,9 @@ public class AlchymReference {
         HITSOUND_3 (new Identifier (MODID, "misc.hitsound.3")),
         HITSOUND_4 (new Identifier (MODID, "misc.hitsound.4")),
 
-        TRANSMUTE_DRY (new Identifier (MODID, "transmute.dry"));
+        TRANSMUTE_DRY (new Identifier (MODID, "transmute.dry")),
+
+        TRANSMUTE_FUMES (new Identifier (MODID, "transmute.fumes"));
 
         public final Identifier location;
 
@@ -88,30 +131,31 @@ public class AlchymReference {
         }
     }
 
-    private static final Map <Object, AdditionalMaterials> existingSpeciesMaterials = new HashMap <> ();
-
-    public static AdditionalMaterials getExistingSpeciesMaterial (Object species) {
-        return existingSpeciesMaterials.getOrDefault (species, null);
-    }
-
     public interface IMaterial {
         public String getName ();
     }
 
     public enum Materials implements IMaterial {
-        // Metals
-        ALCHYMIC_GOLD (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER, Forms.SMALL_POWDER),
-        ALCHYMIC_SILVER (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER, Forms.SMALL_POWDER),
-        ALCHYMIC_STEEL (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER, Forms.SMALL_POWDER),
-        COPPER (Forms.INGOT, Forms.NUGGET, Forms.POWDER, Forms.SMALL_POWDER),
-        GOLD (Forms.POWDER, Forms.SMALL_POWDER),
-        IRON (Forms.POWDER, Forms.SMALL_POWDER),
-        LEAD (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER, Forms.SMALL_POWDER),
-        MERCURY (Forms.LIQUID),
+        // Glass
+        ALCHYMIC_GLASS (Forms.CRYSTAL, Forms.POWDER),
 
         // Reagent powders
-        NITER (Forms.CRYSTAL, Forms.REAGENT_POWDER, Forms.REAGENT_SMALL_POWDER),
-        PROJECTION_POWDER (Forms.REAGENT_POWDER, Forms.REAGENT_SMALL_POWDER);
+        NITER (Forms.CRYSTAL, Forms.REAGENT_POWDER),
+        PROJECTION_POWDER (Forms.REAGENT_POWDER),
+
+        // Metals
+        ALCHYMIC_GOLD (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER),
+        ALCHYMIC_SILVER (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER),
+        ALCHYMIC_STEEL (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER),
+        COPPER (Forms.INGOT, Forms.NUGGET, Forms.POWDER),
+        GOLD (Forms.POWDER),
+        IRON (Forms.POWDER),
+        LEAD (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER),
+        MERCURY (Forms.LIQUID),
+
+        // Chymicals
+        VITRIOL (Forms.CRYSTAL, Forms.POWDER, Forms.LIQUID),
+        ASHEN_WASTE (Forms.POWDER);
 
         public enum Forms {
             /* BLOCK:                   A block of the material.
@@ -122,17 +166,10 @@ public class AlchymReference {
              *
              * POWDER:                  A powdered form of the material.
              *
-             * SMALL_POWDER:            A small powdered form of the material, being 1/4th of regular powder.
-             *
              * REAGENT_POWDER:          A powdered form of the material, except that it also overrides
              *                          MaterialItem#isTransmutationReagent to return true.
              *                            * Note: POWDER and REAGENT_POWDER are mutually exclusive, and this is enforced.
              *                              An exception will be raised if a material contains both of these.
-             *
-             * REAGENT_SMALL_POWDER:    A small powdered form of the material, except that it also overrides
-             *                          MaterialItem#isTransmutationReagent to return true.
-             *                            * Note: SMALL_POWDER and REAGENT_SMALL_POWDER are mutually exclusive, and this
-             *                              is enforced. An exception will be raised if a material contains both of these.
              *
              * CRYSTAL:                 A crystalline form of the material.
              *
@@ -141,10 +178,8 @@ public class AlchymReference {
             BLOCK (CorrespondingItem.BLOCK, 1000, 9),
             INGOT (CorrespondingItem.ITEM, 360, 9),
             NUGGET (CorrespondingItem.ITEM, 40, 9),
-            POWDER (CorrespondingItem.ITEM, 360, 4),
-            REAGENT_POWDER (CorrespondingItem.ITEM, 360, 4),
-            SMALL_POWDER (CorrespondingItem.ITEM, 90, 4),
-            REAGENT_SMALL_POWDER (CorrespondingItem.ITEM, 90, 4),
+            POWDER (CorrespondingItem.ITEM, 360, 1),
+            REAGENT_POWDER (CorrespondingItem.ITEM, 360, 1),
             CRYSTAL (CorrespondingItem.ITEM, 500, 1),
             LIQUID (CorrespondingItem.LIQUID, -1, 1);
 
@@ -163,19 +198,19 @@ public class AlchymReference {
                 BLOCK, ITEM, LIQUID
             }
 
-            public String getName ( ) {
+            public String getName () {
                 return name ().toLowerCase ().replace ("reagent_", "");
             }
 
-            public boolean isBlock ( ) {
+            public boolean isBlock () {
                 return correspondingItem == CorrespondingItem.BLOCK;
             }
 
-            public boolean isItem ( ) {
+            public boolean isItem () {
                 return correspondingItem == CorrespondingItem.ITEM;
             }
 
-            public boolean isLiquid ( ) {
+            public boolean isLiquid () {
                 return correspondingItem == CorrespondingItem.LIQUID;
             }
         }
@@ -188,24 +223,51 @@ public class AlchymReference {
             else
                 forms = Collections.unmodifiableList (new ArrayList<> (Arrays.asList (formsArgs)));
 
-            if (forms != null &&
-                    (forms.contains (Forms.POWDER) || forms.contains (Forms.SMALL_POWDER)) &&
-                    (forms.contains (Forms.REAGENT_POWDER) || forms.contains (Forms.REAGENT_SMALL_POWDER)))
+            if (forms != null && forms.contains (Forms.POWDER) && forms.contains (Forms.REAGENT_POWDER))
                 throw new RuntimeException ("The material '" + getName () + "' is in an illegal state: " +
                         "\"contains both a POWDER and REAGENT_POWDER form\"!");
         }
 
-        public String getName ( ) { return name ().toLowerCase ().replace ("_powder", ""); }
+        public String getName () {
+            return name ().toLowerCase ()
+                    .replace ("_powder", ""); // Remove redundant powder suffix
+        }
+    }
+
+    // Used by build.gradle to automatically generate block/stair/slab models, but otherwise are not used in the
+    // block initialization module.
+    public enum BuildingBlocks {
+        SUNSTONE_BRICK;
+
+        public String getName () { return name ().toLowerCase (); }
     } //$
 
     public enum AdditionalMaterials implements IMaterial {
-        WATER (Fluids.WATER);
+        WATER (Fluids.WATER),
+        SAND (net.minecraft.block.Blocks.SAND),
+        VITRIOL (Alchym.content ().fluids.getMaterial (Materials.VITRIOL)),
+        MERCURY (Alchym.content ().fluids.getMaterial (Materials.MERCURY));
+
+        private Object outer;
+        private static final Map <Object, AdditionalMaterials> existingSpeciesMaterials = new HashMap <> ();
 
         AdditionalMaterials (Object outer) {
-            existingSpeciesMaterials.put (outer, this);
+            this.outer = outer;
         }
 
         public String getName () { return name ().toLowerCase (); }
+
+        public static void initExistingSpecies () {
+            if (! existingSpeciesMaterials.isEmpty ())
+                return;
+
+            for (AdditionalMaterials m : values ())
+                existingSpeciesMaterials.put (m.outer, m);
+        }
+
+        public static AdditionalMaterials getExistingSpeciesMaterial (Object species) {
+            return existingSpeciesMaterials.getOrDefault (species, null);
+        }
     }
 
     public enum PhilosophersStoneCharges {
@@ -224,27 +286,47 @@ public class AlchymReference {
     // TODO: Move this to configuration file
     public static final double DRY_TRANSMUTATION_RADIUS = 4.00;
 
-    public enum GlassContainers {
-        VAT (1000 * 100, Block.createCuboidShape (1, 0, 1, 15, 13, 15), true);
+    public enum ChymicalContainers {
+        COPPER_CRUCIBLE (1000 * 100, Block.createCuboidShape (1.0, 0.0, 1.0, 15.0, 14.5, 15.0),
+                true,
+                TransmutationRecipe.TransmutationType.CALCINATION,
+                TransmutationRecipe.TransmutationType.SOLVATION,
+                TransmutationRecipe.TransmutationType.COAGULATION),
+        CHYMICAL_ALEMBIC (100, Block.createCuboidShape (4.0, 2.0, 4.0, 12.0, 16.0, 12.0),
+                false,
+                TransmutationRecipe.TransmutationType.DISTILLATION),
+        EMPTY (0, Block.createCuboidShape (0.0, 0.0, 0.0, 0.0, 0.0, 0.0),
+                false);
 
         public final long capacity;
         public final VoxelShape boundingBox;
-        public final boolean transmutationCapable;
+        public final Set <TransmutationRecipe.TransmutationType> supportedOps;
+        public final boolean canAcceptItems;
 
-        GlassContainers (long capacity, VoxelShape boundingBox, boolean transmutationCapable) {
+        ChymicalContainers (long capacity, VoxelShape boundingBox, boolean canAcceptItems,
+                         TransmutationRecipe.TransmutationType ... types) {
             this.capacity = capacity;
             this.boundingBox = boundingBox;
-            this.transmutationCapable = transmutationCapable;
+            this.supportedOps = new HashSet<> (Arrays.asList (types));
+            this.canAcceptItems = canAcceptItems;
         }
     }
 
     public enum FluidSolubilities {
         WATER (
                 Fluids.WATER, 1.00f,
-                Pair.of (Materials.NITER, (int) Materials.Forms.POWDER.volume * 2)),
+                Pair.of (Materials.NITER, (int) Materials.Forms.POWDER.volume * 8),
+                Pair.of (Materials.VITRIOL, (int) Materials.Forms.POWDER.volume * 16),
+                Pair.of (AdditionalMaterials.VITRIOL, -1)),
         LAVA (
-                Fluids.LAVA, 2.80f
-        );
+                Fluids.LAVA, 3.10f),
+        VITRIOL (
+                Alchym.content ().fluids.getMaterial (Materials.VITRIOL), 1.75f
+        ),
+        MERCURY (
+                Alchym.content ().fluids.getMaterial (Materials.MERCURY), 13.55f
+        )
+        ;
 
         public final Fluid fluid;
         public final float density;

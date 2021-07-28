@@ -1,6 +1,0 @@
-{
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "alchym:item/materials/iron_small_powder"
-  }
-}

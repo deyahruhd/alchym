@@ -3,7 +3,9 @@ package jard.alchym.helper;
 import jard.alchym.Alchym;
 import jard.alchym.AlchymReference;
 import jard.alchym.api.exception.InvalidActionException;
+import jard.alchym.api.exception.InvalidInterfaceException;
 import jard.alchym.api.ingredient.Ingredient;
+import jard.alchym.api.ingredient.SolutionGroup;
 import jard.alchym.api.ingredient.impl.ItemStackIngredient;
 import jard.alchym.api.recipe.TransmutationRecipe;
 import jard.alchym.api.transmutation.ReagentItem;
@@ -11,14 +13,19 @@ import jard.alchym.api.transmutation.TransmutationAction;
 import jard.alchym.api.transmutation.TransmutationInterface;
 import jard.alchym.api.transmutation.impl.DryTransmutationInterface;
 import jard.alchym.api.transmutation.impl.WetTransmutationInterface;
-import jard.alchym.blocks.blockentities.GlassContainerBlockEntity;
+import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
+import jard.alchym.items.ChymicalFlaskItem;
 import jard.alchym.items.MaterialItem;
 import jard.alchym.items.PhilosophersStoneItem;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
+import net.minecraft.fluid.Fluid;
+import net.minecraft.fluid.Fluids;
+import net.minecraft.item.BucketItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
@@ -43,7 +50,15 @@ public class TransmutationHelper {
             return false;
 
         Pair<World, Vec3d> endpoint = new Pair<>(world, itemEntity.getPos ());
-        TransmutationInterface source = new DryTransmutationInterface(endpoint);
+
+        DryTransmutationInterface source, target;
+
+        try {
+            source = new DryTransmutationInterface (endpoint);
+            target = new DryTransmutationInterface (endpoint);
+        } catch (InvalidInterfaceException e) {
+            return false;
+        }
 
         TransmutationRecipe recipe = Alchym.content ().getTransmutations ()
                 .getClosestRecipe (source, reagent, TransmutationRecipe.TransmutationMedium.DRY, world);
@@ -51,55 +66,56 @@ public class TransmutationHelper {
         if (recipe == null)
             return false;
 
-        TransmutationInterface target = new DryTransmutationInterface(endpoint);
+        int recipeScale = recipe.getRecipeScale (source);
+        int reagentScale = (int) (getReagentCharge (reagent) / recipe.getCharge ());
+
+        if (reagentScale < recipeScale)
+            recipeScale = reagentScale;
+
+        if (recipeScale == 0)
+            throw new RuntimeException ("Attempted transmutation recipe '" + recipe.getName () + "', which returned a " +
+                    "0 recipe scale. This should never happen, something is gravely broken");
+
         TransmutationAction action = new TransmutationAction(source, target, recipe, world);
 
         try {
             if (action.apply(reagent, new BlockPos (itemEntity.getPos()))) {
                 if (reagent.getItem () instanceof PhilosophersStoneItem) {
-                    // Just subtract off
+                    // Just subtract off the current recipe's cost times recipeScale
                 } else if (reagent.getItem () instanceof MaterialItem) {
-                    switch (((MaterialItem) reagent.getItem()).form) {
-                        case REAGENT_POWDER:
-                            long newCharge = getReagentCharge(reagent) - recipe.getCharge();
-                            int largePowderUnits = (int) newCharge / 4;
-                            int smallPowderUnits = (int) newCharge % 4;
+                    if (((MaterialItem) reagent.getItem ()).form == AlchymReference.Materials.Forms.REAGENT_POWDER) {
+                        long newCharge = getReagentCharge (reagent) - (recipe.getCharge () * recipeScale);
 
-                            reagent.setCount (largePowderUnits);
-                            if (smallPowderUnits > 0) {
-                                Item smallPowderItem = Alchym.content ().items.getMaterial(((MaterialItem) reagent.getItem()).material,
-                                        AlchymReference.Materials.Forms.REAGENT_SMALL_POWDER);
-
-                                player.inventory.insertStack (new ItemStack (smallPowderItem, smallPowderUnits));
-                            }
-                            break;
-                        case REAGENT_SMALL_POWDER:
-                            // Subtract off the charge count from the reagent, as each small powder already is a single unit
-                            reagent.setCount (reagent.getCount () - (int) recipe.getCharge ());
-                            break;
-
-                        default:
-                            throw new IllegalStateException("Player '" + player.getDisplayName() +
-                                    "' attempted a transmutation with a non-reagent item '" +
-                                    reagent.getItem().getName() + "'!");
+                        reagent.setCount ((int) newCharge);
+                    } else {
+                        throw new IllegalStateException ("Player '" + player.getDisplayName () +
+                                "' attempted a transmutation with a non-reagent item '" +
+                                reagent.getItem ().getName () + "'!");
                     }
                 }
+
+                world.playSound(null, new BlockPos (itemEntity.getPos ()), Alchym.content().sounds.dryTransmute, SoundCategory.PLAYERS, 1.f, 1.f);
             }
         }
         catch (InvalidActionException e) {
             return false;
         }
 
-        world.playSound(null, new BlockPos (itemEntity.getPos ()), Alchym.content().sounds.dryTransmute, SoundCategory.PLAYERS, 1.f, 1.f);
-
         return true;
     }
 
-    public static boolean tryWetTransmute (World world, GlassContainerBlockEntity container, Ingredient reagent) {
+    public static boolean tryWetTransmute (World world, ChymicalContainerBlockEntity container, Ingredient reagent) {
         if (! (reagent instanceof ItemStackIngredient) || !isReagent (((ItemStackIngredient) reagent).unwrap()))
             return false;
 
-        TransmutationInterface source = new WetTransmutationInterface (container);
+        WetTransmutationInterface source, target;
+
+        try {
+            source = new WetTransmutationInterface (container);
+            target = new WetTransmutationInterface (container);
+        } catch (InvalidInterfaceException e) {
+            return false;
+        }
 
         TransmutationRecipe recipe = Alchym.content ().getTransmutations ()
                 .getClosestRecipe (source, ((ItemStackIngredient) reagent).unwrap(), TransmutationRecipe.TransmutationMedium.WET, world);
@@ -107,38 +123,44 @@ public class TransmutationHelper {
         if (recipe == null)
             return false;
 
-        TransmutationInterface target = new WetTransmutationInterface (container);
+        // Calcination can not happen if there is no insoluble group in the container
+        if (recipe.type == TransmutationRecipe.TransmutationType.CALCINATION && ! container.hasOnlyInsoluble ())
+            return false;
+
+        int recipeScale = recipe.getRecipeScale (source);
+        int reagentScale = (int) (getReagentCharge (((ItemStackIngredient) reagent).unwrap ()) / recipe.getCharge ());
+
+        if (reagentScale < recipeScale)
+            recipeScale = reagentScale;
+
+        if (recipeScale == 0)
+            throw new RuntimeException ("Attempted transmutation recipe '" + recipe.getName () + "', which returned a " +
+                    "0 recipe scale. This should never happen, something is gravely broken");
+
         TransmutationAction action = new TransmutationAction(source, target, recipe, world);
 
         try {
-            if (action.apply (((ItemStackIngredient) reagent).unwrap(), container.getPos ())) {
+            if (action.apply (((ItemStackIngredient) reagent).unwrap (), container.getPos ())) {
                 container.pullIngredient (reagent);
 
                 AlchymReference.Materials baseMaterial = ((MaterialItem) ((ItemStackIngredient) reagent).unwrap ().getItem ()).material;
-                AlchymReference.Materials.Forms baseForm;
                 Item baseItem;
-                int baseCount;
-                long newCharge = getReagentCharge (((ItemStackIngredient) reagent).unwrap ()) - recipe.getCharge();
+                int baseCount = (int) (getReagentCharge (((ItemStackIngredient) reagent).unwrap ()) - (recipe.getCharge () * recipeScale));
 
-                if (newCharge % 4 == 0) {
-                    baseForm = AlchymReference.Materials.Forms.REAGENT_POWDER;
-                    baseCount = (int) (newCharge / 4);
-                } else {
-                    baseForm = AlchymReference.Materials.Forms.REAGENT_SMALL_POWDER;
-                    baseCount = (int) newCharge;
-                }
-
-                baseItem = Alchym.content().items.getMaterial (baseMaterial, baseForm);
+                baseItem = Alchym.content ().items.getMaterial (baseMaterial, AlchymReference.Materials.Forms.REAGENT_POWDER);
 
                 ItemStackIngredient newReagent = new ItemStackIngredient (new ItemStack (baseItem, baseCount));
-                if (! newReagent.isEmpty ())
-                    container.insertIngredient (newReagent);
+
+                if (! newReagent.isEmpty ()) {
+                    SolutionGroup groupToTransmute = container.insertIngredient (newReagent);
+                    container.postInsert (groupToTransmute);
+                }
             }
         } catch (InvalidActionException e) {
             return false;
         }
 
-        return false;
+        return true;
     }
 
     public static boolean isReagent (ItemStack reagent) {
@@ -199,5 +221,14 @@ public class TransmutationHelper {
             transmutationCenter.multiply (1.0 / ((double) items.length));
 
         return transmutationCenter;
+    }
+
+    public static Fluid getFluidFromBucket (Item bucket) {
+        if (bucket == Items.WATER_BUCKET)
+            return Fluids.WATER;
+        else if (bucket == Items.LAVA_BUCKET)
+            return Fluids.LAVA;
+        else
+            return null;
     }
 }

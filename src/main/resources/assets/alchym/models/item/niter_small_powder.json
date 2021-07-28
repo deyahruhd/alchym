@@ -1,6 +1,0 @@
-{
-  "parent": "item/generated",
-  "textures": {
-    "layer0": "alchym:item/materials/niter_small_powder"
-  }
-}

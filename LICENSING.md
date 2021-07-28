@@ -1,5 +1,16 @@
-### How code and assets in this mod are licensed
+## How code and assets in this mod are licensed
 
-All source code in this project, which generally includes any file in ./src/main/java and any gradle build scripts, are licensed under the **MIT License**; a copy of which is supplied in the LICENSE-CODE file.
+### Source code
 
-All assets of the mod, such as sound and music files, textures and images, and .obj models, are licensed under the **Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License (CC BY-NC-SA 4.0)**; a copy of which is supplied in the LICENSE-ASSETS file.
+All source code in this project belonging to any contributor to this repository shall be licensed under the
+**MIT License**; a copy of which is supplied in the LICENSE-CODE file. This applies to virtually all source files in
+`src/main/java` and any gradle build scripts.
+
+**Exception**: The implementation of `src/main/java/jard/alchym/mixin/PlayerTravelMixin::playerGrappleMove` is an
+adaptation of the '[Swinging Grappling Hook for Quake](https://www.perecli.com/hooked/)' mod, which is copyrighted work owned by Perecli 'Bort' Manole. He has granted
+me (Jared Barocsi / jard-b) permission to use and adapt the code as such. A copyright notice has been included for the
+corresponding portions of code in this file.
+
+### Art, music, sounds, and other assets
+
+All rights are reserved for the assets of the mod. Redistribution, modification, or copying the files in the `assets` directory in any way is prohibited without *explicit* permission from their copyright holder (Jared Barocsi / jard-b).

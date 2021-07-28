@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "lead_block",
+  "pattern": [
+    "###",
+    "###",
+    "###"
+  ],
+  "key": {
+    "#": {
+      "item": "alchym:lead_ingot"
+    }
+  },
+  "result": {
+    "item": "alchym:lead_block"
+  }
+}

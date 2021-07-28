@@ -1,0 +1,6 @@
+{
+  "parent": "item/generated",
+  "textures": {
+    "layer0": "alchym:item/a_good_friends_collar"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "## ",
+    "##*",
+    "*  "
+  ],
+  "key": {
+    "#": {
+      "item": "alchym:alchymic_glass"
+    },
+    "*": {
+      "item": "alchym:chymical_tubing"
+    }
+  },
+  "result": {
+    "item": "alchym:chymical_alembic"
+  }
+}

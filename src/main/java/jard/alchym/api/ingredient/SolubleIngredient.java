@@ -1,12 +1,12 @@
 package jard.alchym.api.ingredient;
 
 import jard.alchym.AlchymReference;
-import jard.alchym.blocks.blockentities.GlassContainerBlockEntity;
+import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
 import net.minecraft.fluid.Fluid;
 
 /***
  *  SolubleIngredient
- *  Interface class for any solute that can be dissolved within a {@link GlassContainerBlockEntity}.
+ *  Interface class for any solute that can be dissolved within a {@link ChymicalContainerBlockEntity}.
  *
  *  Describes the solubility of a solute with respect to some {@link Fluid} by returning the amount of solute that can
  *  dissolve within that {@linkplain Fluid fluid}. 0 indicates insolubility while -1 indicates complete miscibility.
@@ -20,7 +20,7 @@ public interface SolubleIngredient {
      * @param container the container in question
      * @return true if this {@code SolubleIngredient} should be inserted
      */
-    boolean canInsert (GlassContainerBlockEntity container);
+    boolean canInsert (ChymicalContainerBlockEntity container);
 
     /**
      * Returns this SolubleIngredient's material, defined in AlchymReference.

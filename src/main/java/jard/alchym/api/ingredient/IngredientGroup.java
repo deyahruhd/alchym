@@ -3,6 +3,7 @@ package jard.alchym.api.ingredient;
 import com.google.common.collect.Lists;
 import jard.alchym.api.ingredient.impl.FluidVolumeIngredient;
 import jard.alchym.api.ingredient.impl.ItemStackIngredient;
+import jard.alchym.api.recipe.TransmutationRecipe;
 import jard.alchym.init.RecipeGroupAccessor;
 import jard.alchym.api.transmutation.TransmutationInterface;
 import alexiil.mc.lib.attributes.fluid.volume.FluidVolume;
@@ -206,11 +207,13 @@ public class IngredientGroup implements Iterable <Ingredient>{
      *         supplied by {@code source} such that I ⊆ J.
      */
     public boolean peek (TransmutationInterface source) {
-        // Check if the source of the supplied action has
         for (Ingredient ingredient : contents) {
             assert (ingredient instanceof ItemStackIngredient);
 
-            if (! source.peek (ingredient))
+            // Check if the peeked ingredient amount is greater than or equal to this group's instance of
+            // that ingredient.
+            // If the source does not have enough then this IngredientGroup isn't a subset
+            if (source.peek (ingredient) < ingredient.getAmount ())
                 return false;
         }
 
@@ -235,11 +238,9 @@ public class IngredientGroup implements Iterable <Ingredient>{
      * @return the {@link Ingredient} that matches {@code t}, or an empty ingredient if not found.
      */
     public Ingredient getMatchingIngredient (Ingredient t) {
-        if (isInGroup (t)) {
-            for (Ingredient i : contents) {
-                if (i.equals (t) || i.instanceMatches (t))
-                    return i;
-            }
+        for (Ingredient i : contents) {
+            if (i.equals (t) || i.instanceMatches (t))
+                return i;
         }
 
         return t.getDefaultEmpty ();
@@ -332,8 +333,11 @@ public class IngredientGroup implements Iterable <Ingredient>{
      ***/
     static final class RecipeGroupAccessorImpl extends RecipeGroupAccessor {
         @Override
-        protected IngredientGroup createRecipeGroup(Ingredient... stacks) {
-            return new IngredientGroup (true, stacks);
+        protected IngredientGroup createRecipeGroup (TransmutationRecipe.TransmutationMedium medium, Ingredient... stacks) {
+            if (medium == TransmutationRecipe.TransmutationMedium.DRY)
+                return new IngredientGroup (true, stacks);
+            else
+                return new SolutionGroup (true, stacks);
         }
     }
 }

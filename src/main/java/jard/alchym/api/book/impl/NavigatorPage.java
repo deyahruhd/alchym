@@ -6,6 +6,7 @@ import jard.alchym.api.book.BookPage;
 import jard.alchym.client.gui.screen.GuidebookScreen;
 import jard.alchym.client.gui.widget.AbstractGuidebookWidget;
 import jard.alchym.client.gui.widget.GuidebookNavigatorWidget;
+import jard.alchym.client.gui.widget.GuidebookPageTurnWidget;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.text.LiteralText;
@@ -46,14 +47,21 @@ public class NavigatorPage extends BookPage {
     @Override
     @Environment (EnvType.CLIENT)
     public void populateWidgets (GuidebookScreen book, List<AbstractGuidebookWidget> widgets, AlchymReference.PageInfo.BookSide side) {
-
         widgets.add (new GuidebookNavigatorWidget (
+                book,
+                center,
+                nodes,
+                side,
+                2, 6,
+                AlchymReference.PageInfo.PAGE_WIDTH, 149, LiteralText.EMPTY));
+
+        if (side == AlchymReference.PageInfo.BookSide.RIGHT && backlink instanceof NavigatorPage)
+            widgets.add (new GuidebookPageTurnWidget (
                     book,
-                    center,
-                    nodes,
-                    side,
-                    2, 6,
-                    AlchymReference.PageInfo.PAGE_WIDTH, 149, new LiteralText ("")));
+                    backlink,
+                    GuidebookPageTurnWidget.ArrowDirection.RETURN,
+                    AlchymReference.PageInfo.PAGE_WIDTH - 16 - 2,
+                    AlchymReference.PageInfo.PAGE_HEIGHT - 9 - 7, 16, 9, LiteralText.EMPTY));
     }
 
     public static class NavigatorCenter {
@@ -82,7 +90,7 @@ public class NavigatorPage extends BookPage {
 
         public boolean hidden;
 
-        public int x;
-        public int y;
+        public double x;
+        public double y;
     }
 }

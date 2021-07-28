@@ -16,7 +16,7 @@ import net.minecraft.world.WorldAccess;
  *  Created by jared at 12:02 AM on May 06, 2018.
  ***/
 public abstract class TransmuteSpecialBehavior {
-    public boolean modifyWorld (WorldAccess world, BlockPos position) {
+    public boolean modifyWorld (WorldAccess world, BlockPos position, int count) {
         return true;
     }
 }

@@ -40,5 +40,12 @@
       "alchym:random/transmute/dry.3",
       "alchym:random/transmute/dry.4"
     ]
+  },
+
+  "transmute.fumes": {
+    "subtitle": "subtitles.alchym.transmute.fumes",
+    "sounds": [
+      "minecraft:random/fizz"
+    ]
   }
 }

@@ -1,0 +1,8 @@
+# Blender MTL File: 'copper_crucible.blend'
+# Material Count: 1
+
+newmtl alembic_texture
+map_Kd alchym:block/chymical_alembic
+
+newmtl sprite
+map_Kd alchym:item/materials/alchymic_glass

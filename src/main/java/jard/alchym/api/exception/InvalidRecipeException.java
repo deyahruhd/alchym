@@ -11,7 +11,8 @@ import jard.alchym.api.recipe.TransmuteSpecialBehavior;
  *  {@link jard.alchym.api.recipe.TransmutationRecipe} do not meet the required specification
  *
  *  @see jard.alchym.api.recipe.TransmutationRecipe#TransmutationRecipe(String, IngredientGroup,
- *  AlchymReference.Reagents, TransmutationRecipe.TransmutationMedium, long, IngredientGroup, TransmuteSpecialBehavior)
+ *  AlchymReference.Reagents, TransmutationRecipe.TransmutationMedium, TransmutationRecipe.TransmutationType, long,
+ *  IngredientGroup, TransmuteSpecialBehavior)
  *
  *  Created by jard at 12:06 AM on April 28, 2018.
  ***/

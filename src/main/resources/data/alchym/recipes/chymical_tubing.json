@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " # ",
+    "# #",
+    " # "
+  ],
+  "key": {
+    "#": {
+      "item": "alchym:alchymic_glass"
+    }
+  },
+  "result": {
+    "item": "alchym:chymical_tubing",
+    "count": 20
+  }
+}

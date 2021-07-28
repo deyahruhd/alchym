@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "alchym:alchymic_silver_block"
+    }
+  ],
+  "result": {
+    "item": "alchym:alchymic_silver_ingot",
+    "count": 9
+  }
+}

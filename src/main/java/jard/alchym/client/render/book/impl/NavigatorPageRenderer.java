@@ -40,13 +40,17 @@ public class NavigatorPageRenderer extends PageRenderer <NavigatorPage> {
 
         MinecraftClient.getInstance().getTextureManager().bindTexture (BORDERS [bookProgress]);
 
-        int x = 0, u = 0;
+        int x = 0, u = 0, height = 165;
         if (side == AlchymReference.PageInfo.BookSide.RIGHT) {
             x = 2;
             u = 120;
+
+            if (page instanceof NavigatorPage && !page.id.equals (new Identifier (AlchymReference.MODID, "main"))) {
+                height = 145;
+            }
         }
 
-        drawTexture (stack, x - 6, -10, u, 0, 120, 165);
+        drawTexture (stack, x - 6, -10, u, 0, 120, height);
 
         stack.pop ();
     }

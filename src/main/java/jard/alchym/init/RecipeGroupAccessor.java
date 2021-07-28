@@ -2,6 +2,7 @@ package jard.alchym.init;
 
 import jard.alchym.api.ingredient.Ingredient;
 import jard.alchym.api.ingredient.IngredientGroup;
+import jard.alchym.api.recipe.TransmutationRecipe;
 
 /***
  *  RecipeGroupAccessor
@@ -55,5 +56,5 @@ public abstract class RecipeGroupAccessor {
         instance = accessor;
     }
 
-    protected abstract IngredientGroup createRecipeGroup (Ingredient... stacks);
+    protected abstract IngredientGroup createRecipeGroup (TransmutationRecipe.TransmutationMedium medium, Ingredient... stacks);
 }

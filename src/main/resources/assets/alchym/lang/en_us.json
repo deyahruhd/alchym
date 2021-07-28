@@ -42,9 +42,24 @@
   "item.alchym.projection_powder": "Projection Powder",
   "item.alchym.projection_small_powder": "Small Pile of Projection Powder",
 
+  "item.alchym.vitriol_crystal": "Vitriol Crystal",
+  "item.alchym.vitriol_powder": "Vitriol Powder",
+  "item.alchym.vitriol_small_powder": "Small Pile of Vitriol Powder",
+
+  "item.alchym.ashen_waste_powder": "Ashen Waste",
+
+  "item.alchym.alchymic_glass": "Alchymic Glass",
+
+  "item.alchym.chymical_tubing": "Chymical Tubing",
+  "item.alchym.chymical_flask": "%s Flask",
+  "item.alchym.chymical_flask.no_solvent_prefix": "Chymical",
+
   "item.alchym.revolver": "Chymical Revolver",
+  "item.alchym.speedloader": "Chymical Speedloader",
 
   "item.alchym.alchymic_reference": "Alchymic Reference",
+
+
 
 
 
@@ -54,9 +69,18 @@
   "block.alchym.copper_block": "Block of Copper",
   "block.alchym.lead_block": "Block of Lead",
 
-  "block.alchym.vat_container": "Transmutation Vat",
+  "block.alchym.copper_crucible": "Copper Crucible",
+  "block.alchym.chymical_alembic": "Chymical Alembic",
 
   "block.alchym.niter_bearing_stone": "Niter-Bearing Stone",
+  "block.alchym.lead_ore": "Lead Ore",
+
+  "block.alchym.mercury": "Mercury",
+  "block.alchym.vitriol": "Vitriolic Acid",
+
+
+
+
 
   "subtitles.alchym.item.revolver.fire": "Chymical revolver fires",
   "subtitles.alchym.item.revolver.fire.distant": "Revolver goes off in the distance",
@@ -64,5 +88,17 @@
   "subtitles.alchym.misc.hitsound.1": "Donk!",
   "subtitles.alchym.misc.hitsound.2": "Donk!",
   "subtitles.alchym.misc.hitsound.3": "Donk!",
-  "subtitles.alchym.misc.hitsound.4": "Donk!"
+  "subtitles.alchym.misc.hitsound.4": "Donk!",
+
+  "subtitles.alchym.transmute.dry": "Dry transmutation occurs",
+  "subtitles.alchym.transmute.fumes": "Fumes vent out of a Copper Crucible",
+
+
+
+  "tooltip.alchym.missing_research": "Missing required research.",
+  "tooltip.alchym.requirements": "Requirements:",
+
+  "tooltip.alchym.lab_chymistry": "Lab Chymistry",
+  "tooltip.alchym.lab_chymistry.ops_dissolution": "Alchymic Operations: Dissolution",
+  "tooltip.alchym.lab_chymistry.ops_condensation": "Alchymic Operations: Condensation"
 }

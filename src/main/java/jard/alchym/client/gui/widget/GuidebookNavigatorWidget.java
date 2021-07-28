@@ -6,6 +6,7 @@ import jard.alchym.Alchym;
 import jard.alchym.AlchymReference;
 import jard.alchym.api.book.impl.NavigatorPage;
 import jard.alchym.client.gui.screen.GuidebookScreen;
+import jard.alchym.client.helper.BookHelper;
 import jard.alchym.client.helper.RenderHelper;
 import jard.alchym.client.render.book.impl.NavigatorPageRenderer;
 import jard.alchym.helper.MathHelper;
@@ -18,12 +19,15 @@ import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
+import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
+
+import java.util.List;
 
 /***
  *  GuidebookNavigatorWidget
@@ -36,6 +40,8 @@ public class GuidebookNavigatorWidget extends AbstractGuidebookWidget {
 
     private static final Vec3i OFFSET = new Vec3i (8, 9, 0);
 
+    private static final int HORIZONTAL_NODE_SPACING = 52;
+    private static final int VERTICAL_NODE_SPACING = 48;
 
     private final NavigatorPage.NavigatorCenter center;
     private final NavigatorPage.NavigatorNode [] nodes;
@@ -65,8 +71,8 @@ public class GuidebookNavigatorWidget extends AbstractGuidebookWidget {
     @Override
     public boolean mouseClicked (double d, double e, int i) {
         for (NavigatorPage.NavigatorNode node : nodes) {
-            int nodePosX = this.x + (node.x * 48) + OFFSET.getX () + (int) center.x + horizontalOffset;
-            int nodePosY = this.y + (node.y * 48) + OFFSET.getY () + (int) center.y;
+            int nodePosX = this.x + (int) (node.x * HORIZONTAL_NODE_SPACING) + OFFSET.getX () + (int) center.x + horizontalOffset;
+            int nodePosY = this.y + (int) (node.y * VERTICAL_NODE_SPACING) + OFFSET.getY () + (int) center.y;
 
             if (MathHelper.inRange ((float) d, (float) nodePosX + 4.f, (float) nodePosX + 28.f) &&
                     MathHelper.inRange ((float) e, (float) nodePosY + 4.f, (float) nodePosY + 28.f)) {
@@ -105,8 +111,8 @@ public class GuidebookNavigatorWidget extends AbstractGuidebookWidget {
         // Draw the nodes
 
         for (NavigatorPage.NavigatorNode node : nodes) {
-            int nodeAbsPosX = (node.x * 48) + OFFSET.getX () + (int) center.x + horizontalOffset;
-            int nodeAbsPosY = (node.y * 48) + OFFSET.getY () + (int) center.y;
+            int nodeAbsPosX = (int) (node.x * HORIZONTAL_NODE_SPACING) + OFFSET.getX () + (int) center.x + horizontalOffset;
+            int nodeAbsPosY = (int) (node.y * VERTICAL_NODE_SPACING) + OFFSET.getY () + (int) center.y;
 
             int texXShift = (node.type.ordinal () & (0x00000002)) >> 1;
             int texYShift = (node.type.ordinal () & (0x00000001));
@@ -127,5 +133,20 @@ public class GuidebookNavigatorWidget extends AbstractGuidebookWidget {
         GlStateManager.clear (GL11.GL_STENCIL_BUFFER_BIT, false);
 
         GL11.glDisable (GL11.GL_STENCIL_TEST);
+    }
+
+    @Override
+    public boolean addTooltip (List<Text> tooltip, double transformX, double transformY, int mouseX, int mouseY) {
+        for (NavigatorPage.NavigatorNode node : nodes) {
+            int nodePosX = (int) (node.x * HORIZONTAL_NODE_SPACING) + OFFSET.getX () + (int) center.x + horizontalOffset;
+            int nodePosY = (int) (node.y * VERTICAL_NODE_SPACING) + OFFSET.getY () + (int) center.y;
+
+            if (MathHelper.inRange ((float) transformX, (float) nodePosX + 4.f, (float) nodePosX + 32.f) &&
+                    MathHelper.inRange ((float) transformY, (float) nodePosY + 8.f, (float) nodePosY + 36.f)) {
+                tooltip.add (new TranslatableText ("tooltip." + node.linkTo.getNamespace () + "." + node.linkTo.getPath ()));
+                return true;
+            }
+        }
+        return false;
     }
 }

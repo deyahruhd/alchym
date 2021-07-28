@@ -75,20 +75,23 @@ public class TransmutationAction {
             return false;
         }
 
+        int recipeScale = recipe.getRecipeScale (source);
+
         // Recipe matches; initiate transmutation
         // Handle the world modification first before consuming ingredients
         TransmuteSpecialBehavior editWorld = recipe.getSpecialBehavior ();
-        if (editWorld != null && ! editWorld.modifyWorld (world, pos))
+
+        if (editWorld != null && !editWorld.modifyWorld (world, pos, recipeScale))
             return false;
 
         // Pull input ingredients
         for (Ingredient ingredient : recipe.getInputs ()) {
-            source.extract (ingredient);
+            source.extract (ingredient.dup (ingredient.getAmount () * recipeScale));
         }
 
         // Push output ingredients
         for (Ingredient ingredient : recipe.getOutputs()) {
-            target.insert (ingredient.dup (ingredient.getAmount ()));
+            target.insert (ingredient.dup (ingredient.getAmount () * recipeScale));
         }
 
         valid = false;

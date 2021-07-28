@@ -1,0 +1,9 @@
+{
+  "id": { "namespace": "alchym", "path": "lab_chymistry.alchymic_steel" },
+  "type": "CONTENT",
+
+  "contents": [
+    "\\title{Alchymic Steel}",
+    "// TODO: Write this"
+  ]
+}

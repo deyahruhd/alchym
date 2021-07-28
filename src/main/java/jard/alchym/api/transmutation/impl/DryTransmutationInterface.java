@@ -1,7 +1,9 @@
 package jard.alchym.api.transmutation.impl;
 
 import jard.alchym.AlchymReference;
+import jard.alchym.api.exception.InvalidInterfaceException;
 import jard.alchym.api.ingredient.impl.ItemStackIngredient;
+import jard.alchym.api.recipe.TransmutationRecipe;
 import jard.alchym.api.transmutation.TransmutationInterface;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
@@ -26,7 +28,7 @@ import java.util.function.BiPredicate;
  *  Created by jard at 6:28 PM on April 18, 2019.
  ***/
 public class DryTransmutationInterface extends TransmutationInterface <ItemStackIngredient, Pair<World, Vec3d>> {
-    public DryTransmutationInterface (Pair<World, Vec3d> endpoint) {
+    public DryTransmutationInterface (Pair<World, Vec3d> endpoint) throws InvalidInterfaceException {
         super (endpoint,
                 // Push channel
                 (item, transmutationLoc) -> {
@@ -69,12 +71,12 @@ public class DryTransmutationInterface extends TransmutationInterface <ItemStack
 
                     for (ItemEntity itemEntity : nearbyEntities) {
                         accum += itemEntity.getStack ().getCount ();
-                        if (accum >= item.getAmount ())
-                            return true;
                     }
 
-                    return false;
-                });
+                    return accum;
+                },
+
+                TransmutationRecipe.TransmutationType.COAGULATION);
     }
 
     public static ItemEntity [] filterNearbyEntities (ItemStack item, Pair<World, Vec3d> transmutationLoc, double radius) {

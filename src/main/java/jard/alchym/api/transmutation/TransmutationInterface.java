@@ -1,8 +1,14 @@
 package jard.alchym.api.transmutation;
 
+import jard.alchym.api.exception.InvalidInterfaceException;
 import jard.alchym.api.ingredient.Ingredient;
+import jard.alchym.api.recipe.TransmutationRecipe;
 
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 
 /***
@@ -15,19 +21,22 @@ import java.util.function.BiPredicate;
  *    and pushes it to the endpoint (the pushing 'channel'),
  *  - a {@link BiConsumer} which accepts an arbitrary {@link Ingredient} instance and K instance
  *    (usually, the endpoint) attempts to pull that object from the endpoint (the pulling 'channel'), and
- *  - a {@link BiPredicate} which 'peeks' into the endpoint to see if a matching {@link Ingredient} exists within the endpoint
+ *  - a {@link BiFunction} which 'peeks' into the endpoint to see if a matching {@link Ingredient} exists within the
+ *    endpoint. This shall return the unit count of the {@link Ingredient} if found, or 0 otherwise.
  *
  *  Created by jard at 5:24 PM on April 18, 2019.
  ***/
 public abstract class TransmutationInterface <T extends Ingredient, K> {
     private final BiConsumer<T, K> CLOSED_CHANNEL = ($, $end) -> {};
 
-    K endpoint;
+    protected final K endpoint;
 
-    BiConsumer<T, K> push;
-    BiConsumer<T, K> pull;
+    BiConsumer <T, K> push;
+    BiConsumer <T, K> pull;
 
-    BiPredicate<T, K> peek;
+    BiFunction <T, K, Integer> peek;
+
+    protected final Set <TransmutationRecipe.TransmutationType> supportedOps;
 
     /**
      * Constructs a new TransmutationInterface with an endpoint, push channel, pull channel, and peek channel.
@@ -36,12 +45,18 @@ public abstract class TransmutationInterface <T extends Ingredient, K> {
      * @param pusher A {@linkplain BiConsumer} which inserts a {@code T} parameter into the endpoint
      * @param puller A {@linkplain BiConsumer} which attempts to pull a {@code T} instance from the endpoint
      * @param peeker A {@linkplain BiPredicate} which probes the endpoint for the existence of a matching {@code T} instance
+     * @param ops The set of transmutation operations this transmutation interface supports.
      */
-    public TransmutationInterface (K endpoint, BiConsumer<T, K> pusher, BiConsumer<T, K> puller, BiPredicate <T, K> peeker) {
+    public TransmutationInterface (K endpoint, BiConsumer<T, K> pusher, BiConsumer<T, K> puller, BiFunction <T, K, Integer> peeker,
+                                   TransmutationRecipe.TransmutationType ... ops) throws InvalidInterfaceException {
+        if (ops.length == 0)
+            throw new InvalidInterfaceException ("TransmutationInterface must take at least one transmutation operation.");
+
         this.endpoint = endpoint;
         push = pusher;
         pull = puller;
         peek = peeker;
+        supportedOps = new HashSet<> (Arrays.asList (ops));
     }
 
     /**
@@ -61,7 +76,7 @@ public abstract class TransmutationInterface <T extends Ingredient, K> {
      */
     final TransmutationInterface closePullChannel () {
         pull = CLOSED_CHANNEL;
-        peek = ($, $end) -> false;
+        peek = ($, $end) -> 0;
         return this;
     }
 
@@ -86,19 +101,13 @@ public abstract class TransmutationInterface <T extends Ingredient, K> {
     }
 
     /**
-     * Peeks into the endpoint to determine if the supplied {@link Ingredient}s exist
+     * Peeks into the endpoint.
      *
-     * @param instances A variable-arity array of {@link Ingredient}s
-     * @return true if every {@link Ingredient} exists in {@code endpoint}
+     * @param instance The instance to peek
+     * @return The amount of the instance, if found, or 0 otherwise
      */
-    @SafeVarargs
-    public final boolean peek (T ... instances) {
-        for (T instance : instances) {
-            if (!peek.test (instance, endpoint))
-                return false;
-        }
-
-        return true;
+    public final int peek (T instance) {
+        return peek.apply (instance, endpoint);
     }
 
     /**
@@ -111,5 +120,9 @@ public abstract class TransmutationInterface <T extends Ingredient, K> {
         for (T instance : instances) {
             pull.accept (instance, endpoint);
         }
+    }
+
+    public boolean supports (TransmutationRecipe.TransmutationType type) {
+        return supportedOps.contains (type);
     }
 }

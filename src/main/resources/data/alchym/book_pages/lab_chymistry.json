@@ -1,0 +1,16 @@
+{
+  "id": { "namespace": "alchym", "path": "lab_chymistry" },
+  "type": "NAVIGATOR",
+
+  "nodes": [
+    {
+      "link-to": { "namespace": "alchym", "path": "lab_chymistry.alchymic_steel"},
+      "type": "MINOR",
+      "icon": { "namespace": "alchym", "path": "alchymic_steel_ingot"},
+      "unlocks": [],
+      "hidden": false,
+      "x": 0.5,
+      "y": 4
+    }
+  ]
+}

@@ -34,6 +34,10 @@ public class Alchym implements ModInitializer {
 	@Override
 	public void onInitialize () {
 		alchymContent.initialize ();
+
+		// Must be done in mod initialization. Minecraft block/fluid/item objects do not exist during static init
+		AlchymReference.AdditionalMaterials.initExistingSpecies ();
+
 		proxy.onInitialize ();
 	}
 
