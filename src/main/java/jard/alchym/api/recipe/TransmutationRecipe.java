@@ -154,11 +154,7 @@ public class TransmutationRecipe {
             return false;
 
         // Delegate further comparison to the input IngredientGroup
-        if (! inputs.peek (source))
-            return false;
-
-        // Return true if all criteria were met.
-        return true;
+        return inputs.peek (source);
     }
 
     /**

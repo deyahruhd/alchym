@@ -7,6 +7,7 @@ import jard.alchym.client.gui.screen.GuidebookScreen;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.ingame.BookScreen;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.PageTurnWidget;
@@ -53,7 +54,7 @@ public class GuidebookPageTurnWidget extends AbstractGuidebookWidget {
         matrixStack.push ();
         matrixStack.translate (0.0, 0.0, 4.0);
 
-        this.drawTexture (matrixStack, this.x, this.y, 0, this.dir.ordinal () * 9, 16, 9, 32, 32);
+        drawTexture (matrixStack, this.x, this.y, 0, this.dir.ordinal () * 9, 16, 9, 32, 32);
 
         matrixStack.pop ();
     }

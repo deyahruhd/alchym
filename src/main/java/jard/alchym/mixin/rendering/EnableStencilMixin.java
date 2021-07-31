@@ -79,7 +79,7 @@ public abstract class EnableStencilMixin {
         GlStateManager.bindTexture (this.colorAttachment);
         GlStateManager.texImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8,
                 width, height, 0,
-                GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (IntBuffer)null); // 6408 5121
+                GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, null); // 6408 5121
         GlStateManager.bindFramebuffer(FramebufferInfo.FRAME_BUFFER, this.fbo);
         GlStateManager.framebufferTexture2D(FramebufferInfo.FRAME_BUFFER, FramebufferInfo.COLOR_ATTACHMENT, 3553, this.colorAttachment, 0);
         if (this.useDepthAttachment) {

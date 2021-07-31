@@ -132,7 +132,7 @@ public class AlchymReference {
     }
 
     public interface IMaterial {
-        public String getName ();
+        String getName ();
     }
 
     public enum Materials implements IMaterial {

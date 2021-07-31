@@ -9,6 +9,7 @@ import jard.alchym.client.gui.widget.AbstractGuidebookWidget;
 import jard.alchym.client.helper.BookHelper;
 import jard.alchym.client.helper.RenderHelper;
 import net.fabricmc.fabric.impl.networking.ClientSidePacketRegistryImpl;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.client.util.math.Vector4f;
@@ -51,7 +52,8 @@ public class GuidebookScreen extends Screen {
         //addPageTransform (???);
         // #7
         //addPageTransform (???);
-    };
+    }
+
     private static void addPageTransform (Vec2f coordLeft, Vec2f coordRight, Matrix4f shearLeft, Matrix4f shearRight) {
         Matrix4f inverseLeft = shearLeft.copy ();
         inverseLeft.invert ();
@@ -100,7 +102,7 @@ public class GuidebookScreen extends Screen {
         this.renderBackground (stack);
 
         this.client.getTextureManager ().bindTexture (BOOK_TEXTURE [bookProgress]);
-        this.drawTexture(stack, (int) (((float) this.width - 320.f) / 2.f), 8, 0, 0, 320, 208, 512, 512);
+        drawTexture(stack, (int) (((float) this.width - 320.f) / 2.f), 8, 0, 0, 320, 208, 512, 512);
 
         Pair <Vec2f, Vec2f>       pageCoords = PAGE_COORDINATES.get (bookProgress);
         Pair <Matrix4f, Matrix4f> pageShears = PAGE_SHEARS.get (bookProgress);
