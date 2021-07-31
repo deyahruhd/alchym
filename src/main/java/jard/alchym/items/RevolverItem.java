@@ -4,17 +4,21 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import jard.alchym.client.helper.RenderHelper;
 import jard.alchym.helper.MathHelper;
-import net.minecraft.block.BlockState;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.Arm;
 import net.minecraft.util.math.Matrix4f;
-import net.minecraft.util.math.Quaternion;
+import net.minecraft.util.math.Vec3d;
 
 /***
  *  RevolverItem
@@ -140,7 +144,13 @@ public class RevolverItem extends Item implements CustomAttackItem {
     }
 
     @Override
-    public boolean hasAttackCooldown (ItemStack stack) {
-        return false;
+    public int getAttackCooldown (ItemStack stack) {
+        return 15;
+    }
+
+    @Environment (EnvType.CLIENT)
+    @Override
+    public boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d aimDir) {
+        return true;
     }
 }

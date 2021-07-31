@@ -1,8 +1,13 @@
 package jard.alchym.items;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.Arm;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.Matrix4f;
+import net.minecraft.util.math.Vec3d;
 
 /***
  *  CustomUseAnimItem
@@ -15,5 +20,8 @@ public interface CustomAttackItem {
 
     int getSwingDuration (ItemStack stack);
 
-    boolean hasAttackCooldown (ItemStack stack);
+    int getAttackCooldown (ItemStack stack);
+
+    @Environment (EnvType.CLIENT)
+    boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d aimDir);
 }

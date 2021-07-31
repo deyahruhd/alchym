@@ -18,6 +18,10 @@
     "stacklimit.InventoryMixin"
   ],
   "client": [
+    "clientinteract.ClientCustomAttackMixin",
+    "clientinteract.ClientResetCooldownMixin",
+    "clientinteract.MouseResetCooldownMixin",
+
     "rendering.DynamicModelLoaderMixin",
     "rendering.EnableStencilMixin",
     "rendering.ItemUseAnimMixin",

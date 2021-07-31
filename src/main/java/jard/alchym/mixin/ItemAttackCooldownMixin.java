@@ -37,7 +37,7 @@ public abstract class ItemAttackCooldownMixin extends LivingEntity {
     public void cancelAttackCooldown (CallbackInfo info) {
         ItemStack stack = getMainHandStack ();
 
-        if (stack.getItem () instanceof CustomAttackItem && ! ((CustomAttackItem) stack.getItem ()).hasAttackCooldown (stack))
+        if (stack.getItem () instanceof CustomAttackItem && ((CustomAttackItem) stack.getItem ()).getAttackCooldown (stack) > 0)
             info.cancel ();
     }
 }
