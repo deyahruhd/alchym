@@ -4,10 +4,10 @@ import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import jard.alchym.client.helper.RenderHelper;
 import jard.alchym.helper.MathHelper;
+import jard.alchym.helper.MovementHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -15,10 +15,15 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.Arm;
+import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3f;
+import net.minecraft.world.RaycastContext;
 
 /***
  *  RevolverItem
@@ -130,9 +135,9 @@ public class RevolverItem extends Item implements CustomAttackItem {
         float zDisplace = MathHelper.quinticSpline (progress * 1.25f,            0.09f, zDisplaceCoeffs) * globalFactor;
 
         Matrix4f out = RenderHelper.IDENTITY_MATRIX.copy ();
-        out.multiply (Vector3f.POSITIVE_Z.getDegreesQuaternion (xDisplace * 115.f * handedness));
-        out.multiply (Vector3f.POSITIVE_X.getDegreesQuaternion (xRot * 21.f));
-        out.multiply (Vector3f.POSITIVE_Y.getDegreesQuaternion (xDisplace * -44.f * handedness));
+        out.multiply (Vec3f.POSITIVE_Z.getDegreesQuaternion (xDisplace * 115.f * handedness));
+        out.multiply (Vec3f.POSITIVE_X.getDegreesQuaternion (xRot * 21.f));
+        out.multiply (Vec3f.POSITIVE_Y.getDegreesQuaternion (xDisplace * -44.f * handedness));
         out.multiply (Matrix4f.translate (xDisplace * -0.17f * handedness, yDisplace * 0.8f, zDisplace * 0.87f - 0.07f));
 
         return out;
@@ -151,6 +156,20 @@ public class RevolverItem extends Item implements CustomAttackItem {
     @Environment (EnvType.CLIENT)
     @Override
     public boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d aimDir) {
+        float projectileSpeed = MovementHelper.upsToSpt (975.f);
+
+        Vec3d eyePos = player.getCameraPosVec (MinecraftClient.getInstance ().getTickDelta ());
+        Vec3d initialSpawnPos = aimDir.multiply (projectileSpeed * 2.f).add (eyePos);
+
+        // Trace from player eye pos to projectile spawn position
+        BlockHitResult cast = player.world.raycast (new RaycastContext (eyePos, initialSpawnPos, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.ANY, player));
+
+        Vec3d spawnPos = cast.getType () != HitResult.Type.MISS ? cast.getPos () : initialSpawnPos;
+
+        ParticleEffect effect = cast.getType () != HitResult.Type.MISS ? ParticleTypes.EXPLOSION : ParticleTypes.TOTEM_OF_UNDYING;
+
+        player.world.addParticle (effect, spawnPos.x, spawnPos.y, spawnPos.z, 0.f, 0.f, 0.f);
+
         return true;
     }
 }

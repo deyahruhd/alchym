@@ -6,25 +6,19 @@ import jard.alchym.Alchym;
 import jard.alchym.AlchymReference;
 import jard.alchym.api.book.impl.NavigatorPage;
 import jard.alchym.client.gui.screen.GuidebookScreen;
-import jard.alchym.client.helper.BookHelper;
 import jard.alchym.client.helper.RenderHelper;
-import jard.alchym.client.render.book.impl.NavigatorPageRenderer;
 import jard.alchym.helper.MathHelper;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.OverlayTexture;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
+import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.VertexConsumerProvider;
-import net.minecraft.client.render.model.json.ModelTransformation;
-import net.minecraft.client.texture.MissingSprite;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec2f;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
 import org.lwjgl.opengl.GL11;
 
 import java.util.List;
@@ -89,24 +83,24 @@ public class GuidebookNavigatorWidget extends AbstractGuidebookWidget {
 
     @Override
     public void renderButton(MatrixStack stack, int i, int j, float f) {
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager._clearColor(1.f, 1.f, 1.f, 1.f);
 
         GL11.glEnable (GL11.GL_STENCIL_TEST);
 
-        GlStateManager.colorMask (false, false, false, false);
-        GlStateManager.stencilMask (stencilBit);
-        GlStateManager.stencilFunc (GL11.GL_ALWAYS, stencilBit, stencilBit);
-        GlStateManager.stencilOp (GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
+        RenderSystem.setShaderTexture(0, new Identifier("missingno"));
 
-        textures.bindTexture (new Identifier ("missingno"));
+        GlStateManager._colorMask (false, false, false, false);
+        GlStateManager._stencilMask (stencilBit);
+        GlStateManager._stencilFunc (GL11.GL_ALWAYS, stencilBit, stencilBit);
+        GlStateManager._stencilOp (GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
 
         // Draw a non-textured quad onto the stencil buffer
         drawTexture (stack, this.x, this.y, 0, 0, 106, 149);
 
-        GlStateManager.colorMask (true, true, true, true);
-        GlStateManager.stencilMask (0x0);
-        GlStateManager.stencilFunc (GL11.GL_EQUAL, stencilBit, stencilBit);
-        GlStateManager.stencilOp (GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
+        GlStateManager._colorMask (true, true, true, true);
+        GlStateManager._stencilMask (0x0);
+        GlStateManager._stencilFunc (GL11.GL_EQUAL, stencilBit, stencilBit);
+        GlStateManager._stencilOp (GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
 
         // Draw the nodes
 
@@ -119,7 +113,7 @@ public class GuidebookNavigatorWidget extends AbstractGuidebookWidget {
 
             ItemStack icon = new ItemStack (Registry.ITEM.get (node.icon));
 
-            textures.bindTexture (ELEMENTS);
+            RenderSystem.setShaderTexture(0, ELEMENTS);
 
             drawTexture (stack, this.x + nodeAbsPosX, this.y + nodeAbsPosY,
                     32 * texXShift, 32 * texYShift,
@@ -130,7 +124,7 @@ public class GuidebookNavigatorWidget extends AbstractGuidebookWidget {
             RenderHelper.renderGuiItem (stack, icon, this.x + nodeAbsPosX + 8, this.y + nodeAbsPosY + 8, itemRenderer, textures);
         }
 
-        GlStateManager.clear (GL11.GL_STENCIL_BUFFER_BIT, false);
+        GlStateManager._clear (GL11.GL_STENCIL_BUFFER_BIT, false);
 
         GL11.glDisable (GL11.GL_STENCIL_TEST);
     }
@@ -148,5 +142,10 @@ public class GuidebookNavigatorWidget extends AbstractGuidebookWidget {
             }
         }
         return false;
+    }
+
+    @Override
+    public void appendNarrations(NarrationMessageBuilder builder) {
+        // TODO: Accessibility
     }
 }

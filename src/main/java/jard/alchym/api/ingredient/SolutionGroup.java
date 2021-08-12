@@ -9,8 +9,8 @@ import jard.alchym.api.transmutation.impl.WetTransmutationInterface;
 import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.util.collection.DefaultedList;
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -42,53 +42,53 @@ public class SolutionGroup extends IngredientGroup {
     }
 
     /**
-     * Attempts to deserialize a {@linkplain CompoundTag tag} into its respective {@link Ingredient}.
+     * Attempts to deserialize a {@linkplain NbtCompound tag} into its respective {@link Ingredient}.
      *
-     * @param tag the {@link CompoundTag} to use for deserialization
+     * @param nbt the {@link NbtCompound} to use for deserialization
      * @return the {@link Ingredient} if successful, or null otherwise
      */
-    private Ingredient attemptDeserialize  (CompoundTag tag) {
-        // TODO: Find an elegant way to do this
-        if (tag.contains ("InnerFluidVolume"))  return new FluidVolumeIngredient(tag, FluidVolume.class);
-        else if (tag.contains ("InnerItemStack")) return new ItemStackIngredient (tag, ItemStack.class);
+    private Ingredient attemptDeserialize (NbtCompound nbt) {
+        // TODO: Find an elegant way to do this, can easily be done in Scala but not in Java.
+        if (nbt.contains ("InnerFluidVolume"))  return new FluidVolumeIngredient(nbt, FluidVolume.class);
+        else if (nbt.contains ("InnerItemStack")) return new ItemStackIngredient (nbt, ItemStack.class);
 
         return null;
     }
 
     /**
-     * Serializes this {@code SolutionGroup} into the supplied {@linkplain CompoundTag tag}.
+     * Serializes this {@code SolutionGroup} into the supplied {@linkplain NbtCompound tag}.
      *
-     * @param tag the {@link CompoundTag} to use when serializing
-     * @return the resulting {@link CompoundTag}
+     * @param nbt the {@link NbtCompound} to use when serializing
+     * @return the resulting {@link NbtCompound}
      */
-    public CompoundTag toTag (CompoundTag tag) {
-        ListTag serializedIngs = new ListTag ();
+    public NbtCompound writeNbt (NbtCompound nbt) {
+        NbtList serializedIngs = new NbtList ();
 
         contents.forEach (ingredient -> {
-            serializedIngs.add (ingredient.toTag (new CompoundTag ()));
+            serializedIngs.add (ingredient.writeNbt (new NbtCompound ()));
         });
 
-        tag.put ("Ingredients", serializedIngs);
+        nbt.put ("Ingredients", serializedIngs);
 
-        return tag;
+        return nbt;
     }
 
     /**
-     * Deserializes the supplied {@link CompoundTag} into this {@code SolutionGroup}, overriding any existing
+     * Deserializes the supplied {@link NbtCompound} into this {@code SolutionGroup}, overriding any existing
      * {@linkplain Ingredient ingredients}.
      *
-     * @param tag the {@link CompoundTag} to use for deserialization
+     * @param nbt the {@link NbtCompound} to use for deserialization
      */
-    public boolean fromTag (CompoundTag tag) {
-        if (! isEmpty () || tag == null || ! tag.contains ("Ingredients"))
+    public boolean readNbt (NbtCompound nbt) {
+        if (! isEmpty () || nbt == null || ! nbt.contains ("Ingredients"))
             return true;
 
         contents.clear ();
 
-        ListTag serializedIngs = (ListTag) tag.get ("Ingredients");
+        NbtList serializedIngs = (NbtList) nbt.get ("Ingredients");
 
-        serializedIngs.forEach (ingredientTag -> {
-            Ingredient ingredient = attemptDeserialize ((CompoundTag) ingredientTag);
+        serializedIngs.forEach (ingredientNbt -> {
+            Ingredient ingredient = attemptDeserialize ((NbtCompound) ingredientNbt);
 
             if (ingredient != null) {
                 addIngredient (ingredient);

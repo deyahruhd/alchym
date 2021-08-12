@@ -11,15 +11,16 @@ import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.entity.EntityRenderDispatcher;
+import net.minecraft.client.render.entity.EntityRendererFactory;
 import net.minecraft.client.render.entity.LivingEntityRenderer;
 import net.minecraft.client.render.entity.PlayerEntityRenderer;
 import net.minecraft.client.render.entity.model.*;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Quaternion;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -35,8 +36,8 @@ import java.util.UUID;
  ***/
 @Mixin (PlayerEntityRenderer.class)
 public abstract class PlayerAnimMixin$2 extends LivingEntityRenderer<AbstractClientPlayerEntity, PlayerEntityModel<AbstractClientPlayerEntity>> {
-    public PlayerAnimMixin$2 (EntityRenderDispatcher entityRenderDispatcher, PlayerEntityModel<AbstractClientPlayerEntity> entityModel, float f) {
-        super (entityRenderDispatcher, entityModel, f);
+    public PlayerAnimMixin$2(EntityRendererFactory.Context ctx, PlayerEntityModel<AbstractClientPlayerEntity> model, float shadowRadius) {
+        super(ctx, model, shadowRadius);
     }
 
     @Inject (method = "render", at = @At ("HEAD"))
@@ -48,7 +49,7 @@ public abstract class PlayerAnimMixin$2 extends LivingEntityRenderer<AbstractCli
 
         Vec3d look = player.getRotationVec (MinecraftClient.getInstance ().getTickDelta ()).multiply (1.0, 0.0, 1.0);
         Vec3d right = vel.crossProduct (new Vec3d (0.0, 1.0, 0.0)).normalize ();
-        Vector3f axis = new Vector3f (right);
+        Vec3f axis = new Vec3f (right);
 
         double dot = look.dotProduct (vel.normalize ());
 
@@ -115,10 +116,10 @@ public abstract class PlayerAnimMixin$2 extends LivingEntityRenderer<AbstractCli
             q += 25.0F;
         }
 
-        stack.multiply(Vector3f.POSITIVE_Y.getDegreesQuaternion(- s / 2.0F - bodyYaw));
+        stack.multiply(Vec3f.POSITIVE_Y.getDegreesQuaternion(- s / 2.0F - bodyYaw));
         stack.translate(0.0D, 1.5D - 0.125D - (isTrulySneaking ? 0.15D : 0.0D), - 0.125D + (isTrulySneaking ? 0.03D : 0.0D));
-        stack.multiply(Vector3f.POSITIVE_X.getDegreesQuaternion(6.0F + r / 2.0F + q));
-        stack.multiply(Vector3f.POSITIVE_Z.getDegreesQuaternion(180.0F - s / 2.0F));
+        stack.multiply(Vec3f.POSITIVE_X.getDegreesQuaternion(6.0F + r / 2.0F + q));
+        stack.multiply(Vec3f.POSITIVE_Z.getDegreesQuaternion(180.0F - s / 2.0F));
 
         VertexConsumer vertexConsumer = provider.getBuffer(RenderLayer.getEntitySolid (new Identifier ("alchym", "textures/jard_cloak.png")));
         ((ExtraPlayerDataAccess) this.getModel ()).getCloak ().render (stack, vertexConsumer, i, OverlayTexture.DEFAULT_UV);

@@ -9,19 +9,15 @@ import jard.alchym.AlchymReference;
 import jard.alchym.api.ingredient.Ingredient;
 import jard.alchym.api.ingredient.SolutionGroup;
 import jard.alchym.api.ingredient.impl.FluidVolumeIngredient;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.registry.Registry;
-import net.minecraft.world.World;
 
 /***
  *  ChymicalFlaskItem
@@ -56,11 +52,11 @@ public class ChymicalFlaskItem extends ContainsSolutionItem {
                 SolutionGroup group = new SolutionGroup ();
                 group.addIngredient (new FluidVolumeIngredient (key.withAmount (FluidAmount.BUCKET)));
 
-                CompoundTag tag = new CompoundTag ();
-                tag.put ("ContainedGroup", group.toTag (new CompoundTag ()));
+                NbtCompound nbt = new NbtCompound ();
+                nbt.put ("ContainedGroup", group.writeNbt (new NbtCompound ()));
 
                 ItemStack flaskWithFluid = new ItemStack (this);
-                flaskWithFluid.setTag (tag);
+                flaskWithFluid.setNbt (nbt);
                 defaultedList.add (flaskWithFluid);
             }
         }
@@ -79,7 +75,7 @@ public class ChymicalFlaskItem extends ContainsSolutionItem {
     }
 
     public static Fluid getSolvent (ItemStack stack) {
-        if (! (stack.hasTag () && stack.getTag ().contains ("ContainedGroup")))
+        if (! (stack.hasNbt () && stack.getNbt ().contains ("ContainedGroup")))
             return null;
 
         SolutionGroup group = getSolutionGroup (stack);

@@ -2,7 +2,7 @@ package jard.alchym.mixin;
 
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,30 +25,30 @@ public abstract class ItemStackMixin {
     @Shadow
     public Item getItem () { return null; }
     @Shadow
-    private CompoundTag tag;
+    private NbtCompound nbt;
 
-    @Inject (method = "toTag", at = @At ("HEAD"), cancellable = true)
-    public void toTag(CompoundTag tag, CallbackInfoReturnable<CompoundTag> info) {
+    @Inject (method = "writeNbt", at = @At ("HEAD"), cancellable = true)
+    public void writeNbt (NbtCompound nbt, CallbackInfoReturnable<NbtCompound> info) {
         if (count > Byte.MAX_VALUE) {
             // Write the amount as an integer instead of a byte
             Identifier identifier = Registry.ITEM.getId (getItem ());
-            tag.putString("id", identifier == null ? "minecraft:air" : identifier.toString ());
+            nbt.putString("id", identifier == null ? "minecraft:air" : identifier.toString ());
 
-            tag.putByte("Count", (byte) this.count);
-            tag.putInt("FullCount", this.count);
-            if (this.tag != null) {
-                tag.put("tag", this.tag);
+            nbt.putByte("Count", (byte) this.count);
+            nbt.putInt("FullCount", this.count);
+            if (this.nbt != null) {
+                nbt.put("nbt", this.nbt);
             }
 
             info.cancel ();
 
-            info.setReturnValue (tag);
+            info.setReturnValue (nbt);
         }
     }
 
-    @Inject(method = "Lnet/minecraft/item/ItemStack;<init>(Lnet/minecraft/nbt/CompoundTag;)V", at = @At("RETURN"))
-    private void onConstructor (CompoundTag tag, CallbackInfo info) {
-        if (tag.contains ("FullCount"))
-            count = tag.getInt ("FullCount");
+    @Inject(method = "setNbt(Lnet/minecraft/nbt/NbtCompound;)V", at = @At("RETURN"))
+    private void setNbt (NbtCompound nbt, CallbackInfo info) {
+        if (nbt != null && nbt.contains ("FullCount"))
+            count = nbt.getInt ("FullCount");
     }
 }

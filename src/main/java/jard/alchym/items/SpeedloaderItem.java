@@ -10,7 +10,7 @@ import jard.alchym.api.ingredient.impl.FluidVolumeIngredient;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.collection.DefaultedList;
 
 /***
@@ -39,11 +39,11 @@ public class SpeedloaderItem extends ContainsSolutionItem {
                 SolutionGroup group = new SolutionGroup ();
                 group.addIngredient (new FluidVolumeIngredient (key.withAmount (FluidAmount.BUCKET)));
 
-                CompoundTag tag = new CompoundTag ();
-                tag.put ("ContainedGroup", group.toTag (new CompoundTag ()));
+                NbtCompound nbt = new NbtCompound ();
+                nbt.put ("ContainedGroup", group.writeNbt (new NbtCompound ()));
 
                 ItemStack flaskWithFluid = new ItemStack (this);
-                flaskWithFluid.setTag (tag);
+                flaskWithFluid.setNbt (nbt);
                 defaultedList.add (flaskWithFluid);
             }
         }

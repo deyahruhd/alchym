@@ -41,7 +41,7 @@ public class InitWorldgenFeatures extends InitAbstract <Feature <?>> {
     @Override
     public void initialize () {
         final Feature leadOre = new OregenFeature (Alchym.content ().blocks.leadOre, 10, 6,
-                16, 48, 64, BiomeSelectors.foundInOverworld (), OreFeatureConfig.Rules.BASE_STONE_OVERWORLD);
+                16, 48, BiomeSelectors.foundInOverworld (), OreFeatureConfig.Rules.BASE_STONE_OVERWORLD);
 
         register (AlchymReference.WorldGen.Features.NITER_DEPOSIT.getName (), niterDeposits);
         register (AlchymReference.WorldGen.Features.LEAD_ORES.getName (), leadOre);
@@ -50,7 +50,7 @@ public class InitWorldgenFeatures extends InitAbstract <Feature <?>> {
     @Override
     void preRegister (String id, Feature <?> obj) {
         if (obj instanceof AlchymFeature) {
-            RegistryKey <ConfiguredFeature <?, ?>> key = RegistryKey.of (Registry.CONFIGURED_FEATURE_WORLDGEN,
+            RegistryKey <ConfiguredFeature <?, ?>> key = RegistryKey.of (Registry.CONFIGURED_FEATURE_KEY,
                     new Identifier (AlchymReference.MODID, id));
 
             Registry.register (BuiltinRegistries.CONFIGURED_FEATURE, key.getValue (), ((AlchymFeature <?>) obj).getConfiguration ());

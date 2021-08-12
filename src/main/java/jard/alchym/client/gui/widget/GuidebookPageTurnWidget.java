@@ -1,5 +1,6 @@
 package jard.alchym.client.gui.widget;
 
+import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import jard.alchym.AlchymReference;
 import jard.alchym.api.book.BookPage;
@@ -9,8 +10,10 @@ import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.ingame.BookScreen;
+import net.minecraft.client.gui.screen.narration.NarrationMessageBuilder;
 import net.minecraft.client.gui.widget.ButtonWidget;
 import net.minecraft.client.gui.widget.PageTurnWidget;
+import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -47,9 +50,11 @@ public class GuidebookPageTurnWidget extends AbstractGuidebookWidget {
 
     @Override
     public void renderButton(MatrixStack matrixStack, int i, int j, float f) {
-        RenderSystem.color4f (1.0F, 1.0F, 1.0F, 1.0F);
+        GlStateManager._clearColor (1.0F, 1.0F, 1.0F, 1.0F);
 
-        textures.bindTexture (ARROWS);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, ARROWS);
 
         matrixStack.push ();
         matrixStack.translate (0.0, 0.0, 4.0);
@@ -67,5 +72,10 @@ public class GuidebookPageTurnWidget extends AbstractGuidebookWidget {
     @Override
     public boolean addTooltip (List<Text> tooltip, double transformX, double transformY, int mouseX, int mouseY) {
         return false;
+    }
+
+    @Override
+    public void appendNarrations(NarrationMessageBuilder builder) {
+        // TODO: Accessibility
     }
 }

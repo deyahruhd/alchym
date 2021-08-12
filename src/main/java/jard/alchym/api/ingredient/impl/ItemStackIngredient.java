@@ -6,7 +6,7 @@ import jard.alchym.api.ingredient.IngredientGroup;
 import jard.alchym.helper.MaterialItemConversionHelper;
 import jard.alchym.items.MaterialItem;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 /***
  *  ItemStackIngredient
@@ -23,8 +23,8 @@ public class ItemStackIngredient extends Ingredient<ItemStack> {
         super (instance, ItemStack.class, parent);
     }
 
-    public ItemStackIngredient (CompoundTag tag, Class<ItemStack> parameterType) {
-        super (tag, parameterType);
+    public ItemStackIngredient (NbtCompound nbt, Class<ItemStack> parameterType) {
+        super (nbt, parameterType);
     }
 
     @Override
@@ -118,17 +118,17 @@ public class ItemStackIngredient extends Ingredient<ItemStack> {
     }
 
     @Override
-    protected CompoundTag toTag (CompoundTag tag) {
-        tag.put ("InnerItemStack", instance.toTag (new CompoundTag ()));
+    protected NbtCompound writeNbt (NbtCompound nbt) {
+        nbt.put ("InnerItemStack", instance.writeNbt (new NbtCompound ()));
 
-        return tag;
+        return nbt;
     }
 
     @Override
-    protected void fromTag (CompoundTag tag) {
-        if (tag == null || ! tag.contains ("InnerItemStack"))
+    protected void readNbt (NbtCompound nbt) {
+        if (nbt == null || ! nbt.contains ("InnerItemStack"))
             return;
 
-        this.instance = ItemStack.fromTag (tag.getCompound ("InnerItemStack"));
+        this.instance = ItemStack.fromNbt (nbt.getCompound ("InnerItemStack"));
     }
 }

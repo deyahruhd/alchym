@@ -12,11 +12,9 @@ import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.util.math.Vector3f;
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.util.math.Matrix4f;
-import net.minecraft.world.World;
+import net.minecraft.util.math.Vec3f;
 
 /***
  *  RenderHelper
@@ -30,9 +28,9 @@ public class RenderHelper {
 
         float oneOverAlpha = (float) Math.tan (angle * 0.017453292F);
 
-        Matrix4f first = new Matrix4f (Vector3f.NEGATIVE_Z.getDegreesQuaternion (- angle));
+        Matrix4f first = new Matrix4f (Vec3f.NEGATIVE_Z.getDegreesQuaternion (- angle));
         Matrix4f second = Matrix4f.scale (1.f / oneOverAlpha, oneOverAlpha, 1.f);
-        Matrix4f third = new Matrix4f (Vector3f.NEGATIVE_Z.getDegreesQuaternion (90.f - angle));
+        Matrix4f third = new Matrix4f (Vec3f.NEGATIVE_Z.getDegreesQuaternion (90.f - angle));
 
         first.multiply (second);
         first.multiply (third);
@@ -49,22 +47,18 @@ public class RenderHelper {
     public static void renderGuiItem (MatrixStack stack, ItemStack itemStack,
                                   int i, int j,
                                   ItemRenderer renderer, TextureManager textureManager) {
-        BakedModel bakedModel = renderer.getHeldItemModel (itemStack, null, null);
+        BakedModel bakedModel = renderer.getHeldItemModel(itemStack, null, null, 0);
 
         stack.push ();
-        textureManager.bindTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE);
-        textureManager.getTexture(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE).setFilter(false, false);
-        RenderSystem.enableRescaleNormal();
-        RenderSystem.enableAlphaTest();
-        RenderSystem.defaultAlphaFunc();
+        RenderSystem.setShaderTexture(0, SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE);
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SrcFactor.SRC_ALPHA, GlStateManager.DstFactor.ONE_MINUS_SRC_ALPHA);
-        RenderSystem.color4f(1.0F, 1.0F, 1.0F, 1.0F);
         stack.translate (i, j, 2.0F);
         stack.translate (8.0F, 8.0F, 0.0F);
         stack.scale (1.0F, -1.0F, 1.0F);
         stack.scale (16.0F, 16.0F, 16.0F);
 
+        RenderSystem.applyModelViewMatrix();
         VertexConsumerProvider.Immediate immediate = MinecraftClient.getInstance().getBufferBuilders().getEntityVertexConsumers();
         boolean bl = !bakedModel.isSideLit();
         if (bl) {
@@ -78,9 +72,7 @@ public class RenderHelper {
             DiffuseLighting.enableGuiDepthLighting();
         }
 
-        RenderSystem.disableAlphaTest();
-        RenderSystem.disableRescaleNormal();
-
         stack.pop ();
+        RenderSystem.applyModelViewMatrix();
     }
 }

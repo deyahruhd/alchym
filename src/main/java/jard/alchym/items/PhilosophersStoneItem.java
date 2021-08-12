@@ -1,12 +1,10 @@
 package jard.alchym.items;
 
 import jard.alchym.AlchymReference;
-import jard.alchym.api.transmutation.ReagentItem;
 import jard.alchym.helper.TransmutationHelper;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
@@ -68,14 +66,14 @@ public class PhilosophersStoneItem extends TransmutableReagentItem {
         long charge = 0L;
 
         if (stack != null && ! stack.isEmpty() && stack.getItem () instanceof PhilosophersStoneItem) {
-            if (stack.hasTag () && stack.getTag ().contains (AlchymReference.MODID) &&
-                    stack.getTag ().getCompound (AlchymReference.MODID).contains ("stone_charge")) {
-                charge = stack.getTag ().getCompound (AlchymReference.MODID).getLong ("stone_charge");
+            if (stack.hasNbt () && stack.getNbt ().contains (AlchymReference.MODID) &&
+                    stack.getNbt ().getCompound (AlchymReference.MODID).contains ("stone_charge")) {
+                charge = stack.getNbt ().getCompound (AlchymReference.MODID).getLong ("stone_charge");
             } else {
-                CompoundTag tag = new CompoundTag ();
+                NbtCompound nbt = new NbtCompound ();
                 charge = ((PhilosophersStoneItem) stack.getItem ()).minCharge;
-                tag.putLong ("stone_charge", charge);
-                stack.setTag(tag);
+                nbt.putLong ("stone_charge", charge);
+                stack.setNbt (nbt);
             }
         }
 

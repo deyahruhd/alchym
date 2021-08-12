@@ -7,7 +7,7 @@ import alexiil.mc.lib.attributes.fluid.volume.FluidVolume;
 import jard.alchym.api.ingredient.Ingredient;
 import jard.alchym.api.ingredient.IngredientGroup;
 import jard.alchym.helper.MathHelper;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 import java.util.Objects;
 
@@ -26,8 +26,8 @@ public class FluidVolumeIngredient extends Ingredient<FluidVolume> {
         super (instance, FluidVolume.class, parent);
     }
 
-    public FluidVolumeIngredient(CompoundTag tag, Class<FluidVolume> parameterType) {
-        super (tag, parameterType);
+    public FluidVolumeIngredient(NbtCompound nbt, Class<FluidVolume> parameterType) {
+        super (nbt, parameterType);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class FluidVolumeIngredient extends Ingredient<FluidVolume> {
 
     @Override
     public boolean isEmpty () {
-        return instance.getAmount () == 0 || instance == FluidVolumeUtil.EMPTY;
+        return instance.isEmpty() || instance == FluidVolumeUtil.EMPTY;
     }
 
     @Override
@@ -92,18 +92,18 @@ public class FluidVolumeIngredient extends Ingredient<FluidVolume> {
     }
 
     @Override
-    protected CompoundTag toTag (CompoundTag tag) {
-        tag.put ("InnerFluidVolume", instance.toTag (new CompoundTag ()));
+    protected NbtCompound writeNbt (NbtCompound nbt) {
+        nbt.put ("InnerFluidVolume", instance.toTag (new NbtCompound ()));
 
-        return tag;
+        return nbt;
     }
 
     @Override
-    protected void fromTag (CompoundTag tag) {
-        if (! tag.contains ("InnerFluidVolume"))
+    protected void readNbt (NbtCompound nbt) {
+        if (! nbt.contains ("InnerFluidVolume"))
             return;
 
-        this.instance = FluidVolume.fromTag (tag.getCompound ("InnerFluidVolume"));
+        this.instance = FluidVolume.fromTag (nbt.getCompound ("InnerFluidVolume"));
     }
 
     @Override

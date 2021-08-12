@@ -2,6 +2,7 @@ package jard.alchym.init;
 
 import jard.alchym.AlchymReference;
 import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.util.registry.Registry;
@@ -25,7 +26,7 @@ public class InitBlockEntities extends InitAbstract <BlockEntityType <?>> {
     public void initialize () {
         register (AlchymReference.BlockEntities.CHYMICAL_CONTAINER.getName (), chymicalContainerBlockEntity);
     }
-    private final BlockEntityType from (Supplier<BlockEntity> blockEntity) {
-        return BlockEntityType.Builder.create (blockEntity).build (null);
+    private BlockEntityType from (FabricBlockEntityTypeBuilder.Factory<BlockEntity> blockEntity) {
+        return FabricBlockEntityTypeBuilder.create (blockEntity).build (null);
     }
 }

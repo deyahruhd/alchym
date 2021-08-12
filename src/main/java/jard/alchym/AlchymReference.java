@@ -147,7 +147,7 @@ public class AlchymReference {
         ALCHYMIC_GOLD (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER),
         ALCHYMIC_SILVER (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER),
         ALCHYMIC_STEEL (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER),
-        COPPER (Forms.INGOT, Forms.NUGGET, Forms.POWDER),
+        COPPER (Forms.NUGGET, Forms.POWDER),
         GOLD (Forms.POWDER),
         IRON (Forms.POWDER),
         LEAD (Forms.BLOCK, Forms.INGOT, Forms.NUGGET, Forms.POWDER),

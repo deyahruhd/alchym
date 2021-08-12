@@ -40,7 +40,7 @@ public class InitBlocks extends InitAbstract <Block> {
     public final Block leadOre = new OreBlock (Block.Settings.copy (Blocks.IRON_ORE).requiresTool ());
 
     public final Block sunstoneBrick = new Block (FabricBlockSettings.of (Material.STONE)
-            .strength (3.0f, 9.f).breakByTool (FabricToolTags.PICKAXES).materialColor (MaterialColor.YELLOW_TERRACOTTA));
+            .strength (3.0f, 9.f).breakByTool (FabricToolTags.PICKAXES).mapColor (MapColor.TERRACOTTA_YELLOW));
 
 
 

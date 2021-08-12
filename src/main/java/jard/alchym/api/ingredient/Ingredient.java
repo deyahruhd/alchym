@@ -1,6 +1,6 @@
 package jard.alchym.api.ingredient;
 
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 /***
  *  Ingredient
@@ -84,19 +84,19 @@ public abstract class Ingredient <T> {
     protected abstract void mergeExistingStack (Ingredient<T> in);
 
     /**
-     * Serializes this {@code Ingredient} into the supplied {@linkplain CompoundTag tag}.
+     * Serializes this {@code Ingredient} into the supplied {@linkplain NbtCompound tag}.
      *
-     * @param tag the {@link CompoundTag} to use when serializing
-     * @return the resulting {@link CompoundTag}
+     * @param nbt the {@link NbtCompound} to use when serializing
+     * @return the resulting {@link NbtCompound}
      */
-    protected abstract CompoundTag toTag (CompoundTag tag);
+    protected abstract NbtCompound writeNbt (NbtCompound nbt);
 
     /**
-     * Deserializes the supplied CompoundTag into this {@code Ingredient}, overriding any pre-existing {@code instance}.
+     * Deserializes the supplied NbtCompound into this {@code Ingredient}, overriding any pre-existing {@code instance}.
      *
-     * @param tag the {@link CompoundTag} to use for deserialization
+     * @param nbt the {@link NbtCompound} to use for deserialization
      */
-    protected abstract void fromTag (CompoundTag tag);
+    protected abstract void readNbt (NbtCompound nbt);
 
     /**
      * Returns the inner {@link net.minecraft.fluid.Fluid}/{@link net.minecraft.item.Item} of the {@code instance}.
@@ -140,14 +140,14 @@ public abstract class Ingredient <T> {
     }
 
     /**
-     * Deserializes a {@link CompoundTag} to yield a new {@code Ingredient} instance.
+     * Deserializes a {@link NbtCompound} to yield a new {@code Ingredient} instance.
      *
-     * @param tag a serialized {@code Ingredient}
+     * @param nbt a serialized {@code Ingredient}
      * @param parameterType the class type of {@code T}
      */
-    protected Ingredient (CompoundTag tag, Class<T> parameterType) {
+    protected Ingredient (NbtCompound nbt, Class<T> parameterType) {
         type = parameterType;
-        fromTag (tag);
+        readNbt (nbt);
     }
 
     /**

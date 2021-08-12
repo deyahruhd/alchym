@@ -9,23 +9,19 @@ import jard.alchym.api.ingredient.*;
 import jard.alchym.api.ingredient.impl.FluidVolumeIngredient;
 import jard.alchym.api.ingredient.impl.ItemStackIngredient;
 import jard.alchym.api.recipe.TransmutationRecipe;
-import jard.alchym.blocks.ChymicalContainerBlock;
 import jard.alchym.helper.TransmutationHelper;
 import jard.alchym.items.ChymicalFlaskItem;
 import net.fabricmc.fabric.api.block.entity.BlockEntityClientSerializable;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.fluid.Fluid;
-import net.minecraft.fluid.Fluids;
 import net.minecraft.item.BucketItem;
-import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.NbtElement;
 import net.minecraft.util.collection.DefaultedList;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
@@ -45,12 +41,12 @@ public class ChymicalContainerBlockEntity extends BlockEntity implements BlockEn
 
     private AlchymReference.ChymicalContainers container;
 
-    public ChymicalContainerBlockEntity () {
-        this (AlchymReference.ChymicalContainers.EMPTY);
+    public ChymicalContainerBlockEntity (BlockPos pos, BlockState state) {
+        this (AlchymReference.ChymicalContainers.EMPTY, pos, state);
     }
 
-    public ChymicalContainerBlockEntity (AlchymReference.ChymicalContainers container) {
-        super (Alchym.content ().blockEntities.chymicalContainerBlockEntity);
+    public ChymicalContainerBlockEntity (AlchymReference.ChymicalContainers container, BlockPos pos, BlockState state) {
+        super (Alchym.content ().blockEntities.chymicalContainerBlockEntity, pos, state);
         contents = new ArrayList<> ();
 
         this.container = container;
@@ -263,32 +259,32 @@ public class ChymicalContainerBlockEntity extends BlockEntity implements BlockEn
     }
 
     @Override
-    public CompoundTag toTag (CompoundTag tag) {
-        tag = super.toTag (tag);
+    public NbtCompound writeNbt (NbtCompound nbt) {
+        nbt = super.writeNbt (nbt);
 
-        ListTag contentsList = new ListTag ();
+        NbtList contentsList = new NbtList ();
 
         for (SolutionGroup group : contents) {
-            contentsList.add (group.toTag (new CompoundTag ()));
+            contentsList.add (group.writeNbt (new NbtCompound ()));
         }
 
-        tag.put ("Contents", contentsList);
-        tag.putString ("Container", container.toString ());
-        return tag;
+        nbt.put ("Contents", contentsList);
+        nbt.putString ("Container", container.toString ());
+        return nbt;
     }
 
     @Override
-    public void fromTag (BlockState state, CompoundTag tag) {
-        super.fromTag (null, tag);
+    public void readNbt (NbtCompound nbt) {
+        super.readNbt (nbt);
 
         containsInsoluble = true;
 
-        if (tag.contains ("Contents")) {
-            ListTag contentsList = (ListTag) tag.get ("Contents");
+        if (nbt.contains ("Contents")) {
+            NbtList contentsList = (NbtList) nbt.get ("Contents");
 
-            for (Tag group : contentsList) {
+            for (NbtElement group : contentsList) {
                 SolutionGroup deserializedGroup = new SolutionGroup ();
-                if (deserializedGroup.fromTag ((CompoundTag) group))
+                if (deserializedGroup.readNbt ((NbtCompound) group))
                     contents.add (deserializedGroup);
 
                 if (deserializedGroup.hasLiquid ())
@@ -296,8 +292,8 @@ public class ChymicalContainerBlockEntity extends BlockEntity implements BlockEn
             }
         }
 
-        if (tag.contains ("Container")) {
-            container = AlchymReference.ChymicalContainers.valueOf (tag.getString ("Container"));
+        if (nbt.contains ("Container")) {
+            container = AlchymReference.ChymicalContainers.valueOf (nbt.getString ("Container"));
         }
 
         if (world != null && ! world.isClient)
@@ -305,13 +301,13 @@ public class ChymicalContainerBlockEntity extends BlockEntity implements BlockEn
     }
 
     @Override
-    public void fromClientTag (CompoundTag tag) {
-        fromTag (null,tag);
+    public void fromClientTag (NbtCompound nbt) {
+        readNbt (nbt);
     }
 
     @Override
-    public CompoundTag toClientTag (CompoundTag tag) {
-        return toTag (tag);
+    public NbtCompound toClientTag (NbtCompound nbt) {
+        return writeNbt (nbt);
     }
 
     public long getVolume () {

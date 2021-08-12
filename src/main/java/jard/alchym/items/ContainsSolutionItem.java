@@ -3,7 +3,7 @@ package jard.alchym.items;
 import jard.alchym.api.ingredient.SolutionGroup;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 
 /***
  *  ContainsSolutionItem
@@ -17,16 +17,16 @@ public abstract class ContainsSolutionItem extends Item {
     }
 
     public static SolutionGroup getSolutionGroup (ItemStack stack) {
-        if (! stack.hasTag ()) {
-            stack.setTag (new CompoundTag ());
+        if (! stack.hasNbt ()) {
+            stack.setNbt (new NbtCompound ());
         }
 
         SolutionGroup group = new SolutionGroup ();
 
-        if (! stack.getTag ().contains ("ContainedGroup"))
-            stack.setTag (group.toTag (new CompoundTag ()));
+        if (! stack.getNbt ().contains ("ContainedGroup"))
+            stack.setNbt (group.writeNbt (new NbtCompound ()));
         else
-            group.fromTag ((CompoundTag) stack.getTag ().get ("ContainedGroup"));
+            group.readNbt ((NbtCompound) stack.getNbt ().get ("ContainedGroup"));
 
         return group;
     }

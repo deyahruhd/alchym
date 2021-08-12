@@ -1,5 +1,6 @@
 package jard.alchym.client.render.book.impl;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import jard.alchym.AlchymReference;
 import jard.alchym.api.book.BookPage;
 import jard.alchym.api.book.impl.ContentPage;
@@ -38,7 +39,7 @@ public class NavigatorPageRenderer extends PageRenderer <NavigatorPage> {
         stack.push ();
         stack.scale (2, 2, 2);
 
-        MinecraftClient.getInstance().getTextureManager().bindTexture (BORDERS [bookProgress]);
+        RenderSystem.setShaderTexture(0, BORDERS [bookProgress]);
 
         int x = 0, u = 0, height = 165;
         if (side == AlchymReference.PageInfo.BookSide.RIGHT) {

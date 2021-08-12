@@ -1,5 +1,6 @@
 package jard.alchym.client.gui.screen;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import io.netty.buffer.Unpooled;
 import jard.alchym.Alchym;
 import jard.alchym.AlchymReference;
@@ -9,10 +10,9 @@ import jard.alchym.client.gui.widget.AbstractGuidebookWidget;
 import jard.alchym.client.helper.BookHelper;
 import jard.alchym.client.helper.RenderHelper;
 import net.fabricmc.fabric.impl.networking.ClientSidePacketRegistryImpl;
-import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.screen.Screen;
+import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.util.math.Vector4f;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
@@ -101,7 +101,10 @@ public class GuidebookScreen extends Screen {
     public void render (MatrixStack stack, int i, int j, float f) {
         this.renderBackground (stack);
 
-        this.client.getTextureManager ().bindTexture (BOOK_TEXTURE [bookProgress]);
+        RenderSystem.setShader(GameRenderer::getPositionTexShader);
+        RenderSystem.setShaderColor(1.0F, 1.0F, 1.0F, 1.0F);
+        RenderSystem.setShaderTexture(0, BOOK_TEXTURE [bookProgress]);
+
         drawTexture(stack, (int) (((float) this.width - 320.f) / 2.f), 8, 0, 0, 320, 208, 512, 512);
 
         Pair <Vec2f, Vec2f>       pageCoords = PAGE_COORDINATES.get (bookProgress);

@@ -10,6 +10,7 @@ import net.minecraft.structure.rule.RuleTest;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.StructureWorldAccess;
 import net.minecraft.world.gen.GenerationStep;
+import net.minecraft.world.gen.YOffset;
 import net.minecraft.world.gen.chunk.ChunkGenerator;
 import net.minecraft.world.gen.decorator.Decorator;
 import net.minecraft.world.gen.decorator.RangeDecoratorConfig;
@@ -17,6 +18,7 @@ import net.minecraft.world.gen.feature.ConfiguredFeature;
 import net.minecraft.world.gen.feature.Feature;
 import net.minecraft.world.gen.feature.OreFeature;
 import net.minecraft.world.gen.feature.OreFeatureConfig;
+import net.minecraft.world.gen.heightprovider.UniformHeightProvider;
 
 import java.util.Random;
 import java.util.function.Predicate;
@@ -35,11 +37,11 @@ public class OregenFeature extends OreFeature implements AlchymFeature <OreFeatu
     private final int veinsPerChunk;
 
     public OregenFeature (Block ore, int veinSize, int veinsPerChunk, int lowerYBound, int upperYBound,
-                          int maxRange, Predicate <BiomeSelectionContext> selectors, RuleTest generateIn) {
+                          Predicate <BiomeSelectionContext> selectors, RuleTest generateIn) {
         super (OreFeatureConfig.CODEC);
 
         this.mainConfig = new OreFeatureConfig (generateIn, ore.getDefaultState (), veinSize);
-        this.rangeConfig = new RangeDecoratorConfig (lowerYBound, upperYBound, maxRange);
+        this.rangeConfig = new RangeDecoratorConfig (UniformHeightProvider.create(YOffset.aboveBottom(lowerYBound), YOffset.aboveBottom(upperYBound)));
         this.selectors = selectors;
 
         this.veinsPerChunk = veinsPerChunk;

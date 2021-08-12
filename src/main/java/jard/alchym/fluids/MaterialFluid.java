@@ -98,7 +98,7 @@ public class MaterialFluid extends FlowableFluid {
     @Override
     protected BlockState toBlockState (FluidState fluidState) {
         return Alchym.content ().blocks.getFluidBlock (material).getDefaultState ()
-                .with (Properties.LEVEL_15, method_15741 (fluidState));
+                .with (Properties.LEVEL_15, getBlockStateLevel (fluidState));
     }
 
     @Override

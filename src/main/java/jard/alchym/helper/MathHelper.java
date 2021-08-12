@@ -1,10 +1,7 @@
 package jard.alchym.helper;
 
-import jard.alchym.client.helper.RenderHelper;
-import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Matrix4f;
 import net.minecraft.util.math.Vec3d;
 
 public class MathHelper {

@@ -157,9 +157,10 @@ public class InitTransmutationRecipes {
                                     pos.subtract (new Vec3d (AlchymReference.DRY_TRANSMUTATION_RADIUS / 2.0, 1.0, AlchymReference.DRY_TRANSMUTATION_RADIUS / 2.0)),
                                     pos.add (new Vec3d (AlchymReference.DRY_TRANSMUTATION_RADIUS / 2.0, 1.0, AlchymReference.DRY_TRANSMUTATION_RADIUS / 2.0)));
 
-                            List<Entity> wolfEntities = world.getEntitiesByClass (WolfEntity.class, bounds,
+                            List<Entity> wolfEntities = world.getEntitiesByClass (Entity.class, bounds,
                                     wolf -> {
-                                        if (wolf.getDisplayName () != null && ((WolfEntity) wolf).getOwnerUuid () != null)
+                                        if (wolf instanceof WolfEntity && wolf.getDisplayName () != null
+                                                && ((WolfEntity) wolf).getOwnerUuid () != null)
                                             return (wolf.getDisplayName ().getString () + ((WolfEntity) wolf).getCollarColor () +
                                                     ((WolfEntity) wolf).getOwnerUuid ().toString ()).hashCode () == 1207256336;
 
@@ -171,7 +172,7 @@ public class InitTransmutationRecipes {
                                 return false;
 
                             Entity wolf = wolfEntities.get (0);
-                            wolf.remove ();
+                            wolf.remove (Entity.RemovalReason.DISCARDED);
 
                             return true;
                         }

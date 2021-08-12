@@ -31,7 +31,7 @@ public class InitPackets {
 
                     GuidebookScreen screen = new GuidebookScreen (pageToOpen, new LiteralText (""));
 
-                    net.minecraft.client.MinecraftClient.getInstance ().openScreen (screen);
+                    net.minecraft.client.MinecraftClient.getInstance ().setScreen (screen);
                 });
 
         PACKET_BEHAVIOR.put (AlchymReference.Packets.SYNC_GUIDEBOOK.id,

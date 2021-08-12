@@ -6,7 +6,7 @@ import net.fabricmc.fabric.impl.networking.ServerSidePacketRegistryImpl;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -21,12 +21,12 @@ public class AlchymicReferenceItem extends Item {
         if (! world.isClient) {
             ItemStack book = player.getStackInHand (hand);
 
-            if (! hasBookTag (book))
+            if (! hasBookNbt (book))
                 putPage (book, new Identifier (AlchymReference.MODID, "title"));
 
             PacketByteBuf data = new PacketByteBuf (Unpooled.buffer());
 
-            data.writeIdentifier (new Identifier (book.getTag ().getString ("CurrentPage")));
+            data.writeIdentifier (new Identifier (book.getNbt ().getString ("CurrentPage")));
 
             ServerSidePacketRegistryImpl.INSTANCE.sendToPlayer (player, AlchymReference.Packets.OPEN_GUIDEBOOK.id, data);
 
@@ -36,19 +36,19 @@ public class AlchymicReferenceItem extends Item {
         return TypedActionResult.success (player.getStackInHand (hand));
     }
 
-    public static boolean hasBookTag (ItemStack stack) {
-        return stack.hasTag () && stack.getTag ().contains ("CurrentPage");
+    public static boolean hasBookNbt (ItemStack stack) {
+        return stack.hasNbt () && stack.getNbt ().contains ("CurrentPage");
     }
 
     public static void putPage (ItemStack stack, Identifier id) {
-        CompoundTag tag;
-        if (stack.hasTag ())
-            tag = stack.getTag ();
+        NbtCompound nbt;
+        if (stack.hasNbt ())
+            nbt = stack.getNbt ();
         else
-            tag = new CompoundTag ();
+            nbt = new NbtCompound ();
 
-        tag.putString ("CurrentPage", id.toString ());
+        nbt.putString ("CurrentPage", id.toString ());
 
-        stack.setTag (tag);
+        stack.setNbt (nbt);
     }
 }

@@ -1,10 +1,7 @@
 package jard.alchym.blocks;
 
-import jard.alchym.Alchym;
 import jard.alchym.AlchymReference;
-import jard.alchym.api.recipe.TransmutationRecipe;
 import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
-import jard.alchym.init.InitItems;
 import net.minecraft.block.*;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.entity.EquipmentSlot;
@@ -21,7 +18,6 @@ import net.minecraft.world.BlockView;
 import net.minecraft.world.World;
 
 import java.util.Objects;
-import java.util.Set;
 
 /***
  *  ChymicalContainerBlock
@@ -43,8 +39,8 @@ public class ChymicalContainerBlock extends BlockWithEntity implements AlchymBlo
     }
 
     @Override
-    public BlockEntity createBlockEntity (BlockView var1) {
-        return new ChymicalContainerBlockEntity (container);
+    public BlockEntity createBlockEntity (BlockPos pos, BlockState state) {
+        return new ChymicalContainerBlockEntity (container, pos, state);
     }
 
     @Override
@@ -93,11 +89,6 @@ public class ChymicalContainerBlock extends BlockWithEntity implements AlchymBlo
 
     @Override
     public VoxelShape getCollisionShape(BlockState blockState, BlockView blockView, BlockPos blockPos, ShapeContext shapeContext) {
-        return container.boundingBox;
-    }
-
-    @Override
-    public VoxelShape getVisualShape(BlockState blockState, BlockView blockView, BlockPos blockPos, ShapeContext shapeContext) {
         return container.boundingBox;
     }
 

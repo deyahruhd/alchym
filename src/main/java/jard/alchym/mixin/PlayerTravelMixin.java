@@ -54,7 +54,7 @@ public abstract class PlayerTravelMixin extends LivingEntity {
 
     private static final float GROUND_ACCEL               = 9.5f  / 20.f;
     private static final float AIR_ACCEL                  = 1.0f  / 20.f;
-    private static final float AIRSTRAFE_ACCEL            = 15.0f / 20.f;
+    private static final float AIRSTRAFE_ACCEL            = 10.0f / 20.f;
     private static final float FRICTION                   = 3.5f  / 20.f;
 
     private static final float GRAPPLE_RESTRAINMENT_ACCEL = 0.5f  / 20.f;
@@ -78,6 +78,8 @@ public abstract class PlayerTravelMixin extends LivingEntity {
         super (entityType, world);
     }
 
+    private static java.text.DecimalFormat df = new java.text.DecimalFormat("0.00");
+
     @Inject (method = "travel", at = @At ("HEAD"), cancellable = true)
     public void hookTravel (Vec3d movementIn, CallbackInfo info) {
         if (!world.isClient)
@@ -85,11 +87,11 @@ public abstract class PlayerTravelMixin extends LivingEntity {
 
         ClientPlayerEntity player = (ClientPlayerEntity) (Object) this;
 
-        /*
-        MinecraftClient client = MinecraftClient.getInstance ();
-        int speed = (int) (1600000.d * getVelocity ().multiply (1.f, 0.f, 1.f).length () / 1403.0);
-        client.inGameHud.setOverlayMessage (new LiteralText (String.valueOf (speed)), false);
-        */
+
+        net.minecraft.client.MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance ();
+        float speed = (float) getVelocity ().multiply (1.f, 0.f, 1.f).length () * 20.f;
+        client.inGameHud.setOverlayMessage (new net.minecraft.text.LiteralText (df.format(speed) + " bps"), false);
+
 
 
         setSprinting (false);
@@ -121,8 +123,7 @@ public abstract class PlayerTravelMixin extends LivingEntity {
 
         increaseTravelMotionStats (displacement.x, displacement.y, displacement.z);
 
-        // Move limbs
-        method_29242 (this, this instanceof Flutterer);
+        updateLimbs (this, this instanceof Flutterer);
 
         if (skimTimer > 0)
             skimTimer --;

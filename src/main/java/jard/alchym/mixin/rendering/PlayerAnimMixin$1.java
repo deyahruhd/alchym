@@ -20,6 +20,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.HashMap;
+import java.util.List;
+
 /***
  *  PlayerAnimMixin$1
  *  Responsible for lifting the player's arm when holding a Chymical Revolver, ducking their head based on their
@@ -41,7 +44,7 @@ public abstract class PlayerAnimMixin$1 <T extends LivingEntity> extends EntityM
     @Shadow
     public ModelPart head;
     @Shadow
-    public ModelPart helmet;
+    public ModelPart hat;
     @Shadow
     public boolean sneaking;
 
@@ -127,15 +130,20 @@ public abstract class PlayerAnimMixin$1 <T extends LivingEntity> extends EntityM
                 sel.yaw = head.yaw;
             }
 
-            helmet.copyPositionAndRotation (head);
+            hat.copyTransform (head);
         }
     }
 
     public ModelPart getCloak () {
         if (cloak == null) {
-            cloak = new ModelPart(this, 0, 0);
-            cloak.setTextureSize(26, 23);
-            cloak.addCuboid(-6.0F, 0.0F, -1.0F, 12.0F, 22.0F, 1.0F, 0.0f);
+            cloak = new ModelPart(
+                    List.of(new ModelPart.Cuboid(
+                            0, 0,
+                            -6.0F, 0.0F, -1.0F,
+                            12.0F, 22.0F, 1.0F,
+                            0.f, 0.f, 0.f,
+                            false,
+                            26, 23)), new HashMap<>());
         }
 
         return cloak;
