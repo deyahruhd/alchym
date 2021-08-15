@@ -1,5 +1,6 @@
 package jard.alchym.helper;
 
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
@@ -27,6 +28,15 @@ public class MovementHelper {
         wishdir = wishdir.multiply (accelspeed);
 
         player.addVelocity (wishdir.x, wishdir.y, wishdir.z);
+    }
+
+    public static Vec3d getKnockbackTo (ClientPlayerEntity player, Vec3d from, double radius) {
+        double verticalOffset = Math.min (radius, 0.25);
+
+        return new Vec3d (
+                MathHelper.clamp (from.x, player.getX (), player.getX ()),
+                MathHelper.clamp (from.y, player.getY () + (verticalOffset * 1.5), player.getY () + player.getHeight () - verticalOffset),
+                MathHelper.clamp (from.z, player.getZ (), player.getZ ()));
     }
 
     public static void playerFriction (ClientPlayerEntity player, float friction, float stopSpeed) {

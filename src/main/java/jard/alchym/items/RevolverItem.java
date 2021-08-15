@@ -2,6 +2,8 @@ package jard.alchym.items;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import jard.alchym.client.ExtraPlayerDataAccess;
+import jard.alchym.client.QuakeKnockbackable;
 import jard.alchym.client.helper.RenderHelper;
 import jard.alchym.helper.MathHelper;
 import jard.alchym.helper.MovementHelper;
@@ -150,15 +152,30 @@ public class RevolverItem extends Item implements CustomAttackItem {
 
     @Override
     public int getAttackCooldown (ItemStack stack) {
-        return 15;
+        // return 17; // rocket
+        return 2; // plasma
     }
 
     @Environment (EnvType.CLIENT)
     @Override
     public boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d aimDir) {
-        float projectileSpeed = MovementHelper.upsToSpt (975.f);
+        // rocket
+        // float projectileSpeed = MovementHelper.upsToSpt (925.f) * 1.25f;
+        // float radius = 5.0f;
+        // double verticalKnockback = MovementHelper.upsToSpt (555.f);
+        // double horizontalKnockback = MovementHelper.upsToSpt (555.f);
+        // boolean skim = true;
+        // boolean icy = false;
 
-        Vec3d eyePos = player.getCameraPosVec (MinecraftClient.getInstance ().getTickDelta ());
+        // plasma
+        float projectileSpeed = MovementHelper.upsToSpt (975.f * 2.f);
+        float radius = 1.3f;
+        double verticalKnockback = MovementHelper.upsToSpt (195.f);
+        double horizontalKnockback = MovementHelper.upsToSpt (60.94f);
+        boolean skim = true;
+        boolean icy = true;
+
+        Vec3d eyePos = player.getPos ().add (0.0, player.getStandingEyeHeight (), 0.0);
         Vec3d initialSpawnPos = aimDir.multiply (projectileSpeed * 2.f).add (eyePos);
 
         // Trace from player eye pos to projectile spawn position
@@ -166,7 +183,17 @@ public class RevolverItem extends Item implements CustomAttackItem {
 
         Vec3d spawnPos = cast.getType () != HitResult.Type.MISS ? cast.getPos () : initialSpawnPos;
 
+        if (cast.getType () == HitResult.Type.BLOCK) {
+            double len = net.minecraft.util.math.MathHelper.clamp (0.36 - 0.04 * radius, 0.1, 0.3);
+
+            Vec3d normal = new Vec3d (cast.getSide ().getUnitVector ()).multiply (len);
+            spawnPos = spawnPos.add (normal);
+        }
+
         ParticleEffect effect = cast.getType () != HitResult.Type.MISS ? ParticleTypes.EXPLOSION : ParticleTypes.TOTEM_OF_UNDYING;
+
+        if (cast.getType() != HitResult.Type.MISS)
+            ((QuakeKnockbackable) player).radialKnockback (spawnPos, radius, verticalKnockback, horizontalKnockback, skim, icy);
 
         player.world.addParticle (effect, spawnPos.x, spawnPos.y, spawnPos.z, 0.f, 0.f, 0.f);
 

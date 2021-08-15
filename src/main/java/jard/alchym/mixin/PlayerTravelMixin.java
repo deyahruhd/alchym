@@ -17,12 +17,16 @@
 package jard.alchym.mixin;
 
 import jard.alchym.client.ExtraPlayerDataAccess;
+import jard.alchym.client.QuakeKnockbackable;
 import jard.alchym.helper.MathHelper;
 import jard.alchym.helper.MovementHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.*;
 import net.minecraft.entity.player.PlayerAbilities;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.stat.Stats;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Vec3d;
@@ -45,7 +49,7 @@ import java.util.Stack;
  *  Created by jard at 23:51 on June, 15, 2021.
  ***/
 @Mixin (PlayerEntity.class)
-public abstract class PlayerTravelMixin extends LivingEntity {
+public abstract class PlayerTravelMixin extends LivingEntity implements QuakeKnockbackable {
     private static final float WALKSPEED                  = MovementHelper.upsToSpt (320.f);
     private static final float STOPSPEED                  = MovementHelper.upsToSpt (320.f);
     private static final float AIRSPEED                   = MovementHelper.upsToSpt (240.f);
@@ -72,7 +76,11 @@ public abstract class PlayerTravelMixin extends LivingEntity {
     public PlayerAbilities abilities;
 
     @Shadow
-    public void increaseTravelMotionStats(double d, double e, double f) {}
+    public void increaseTravelMotionStats (double d, double e, double f) {}
+    @Shadow
+    public void incrementStat (Identifier stat) {}
+    @Shadow
+    public void addExhaustion (float exhaustion) {}
 
     protected PlayerTravelMixin (EntityType<? extends LivingEntity> entityType, World world) {
         super (entityType, world);
@@ -89,8 +97,8 @@ public abstract class PlayerTravelMixin extends LivingEntity {
 
 
         net.minecraft.client.MinecraftClient client = net.minecraft.client.MinecraftClient.getInstance ();
-        float speed = (float) getVelocity ().multiply (1.f, 0.f, 1.f).length () * 20.f;
-        client.inGameHud.setOverlayMessage (new net.minecraft.text.LiteralText (df.format(speed) + " bps"), false);
+        float speed = (float) getVelocity ().multiply (1.f, 0.f, 1.f).length () * 1140.4134f;
+        client.inGameHud.setOverlayMessage (new net.minecraft.text.LiteralText ((int) speed + " ups"), false);
 
 
 
@@ -147,6 +155,39 @@ public abstract class PlayerTravelMixin extends LivingEntity {
         }
     }
 
+    @Inject (method = "jump", at = @At ("HEAD"), cancellable = true)
+    public void additiveJump (CallbackInfo info) {
+        info.cancel();
+
+        double d = (double) this.getJumpVelocity() + this.getJumpBoostVelocityModifier ();
+        Vec3d vel = this.getVelocity();
+        this.setVelocity(vel.x, Math.max (d + vel.y, d), vel.z);
+
+        this.incrementStat (Stats.JUMP);
+        this.addExhaustion(0.2F);
+    }
+
+    @Override
+    public void radialKnockback (Vec3d from, float radius, double verticalStrength, double horizontalStrength, boolean skim, boolean icy) {
+        Vec3d to = MovementHelper.getKnockbackTo ((ClientPlayerEntity) (Object) this, from, radius);
+        Vec3d dir = to.subtract (from);
+
+        double scale = net.minecraft.util.math.MathHelper.clamp (
+                (radius - dir.length ()) / radius, 0.0, 1.0);
+        Vec3d knockback = dir
+                .normalize ().multiply (horizontalStrength * scale, verticalStrength, horizontalStrength * scale);
+
+        addVelocity (knockback.x, knockback.y, knockback.z);
+
+        if (scale > 0.f) {
+            if (skim && skimTimer == 0)
+                skimTimer = 5;
+
+            if (icy && gbTimer == 0 && !onGround)
+                gbTimer = 5;
+        }
+    }
+
     private boolean quakeMovement (ClientPlayerEntity player, Vec3d wishDir) {
         Stack <Vec3d> grappleLinks = ((ExtraPlayerDataAccess) player).getGrapple ();
         double grappleLength = ((ExtraPlayerDataAccess) player).getGrappleLength ();
@@ -189,7 +230,7 @@ public abstract class PlayerTravelMixin extends LivingEntity {
             accel = AIR_ACCEL;
         }
         // TODO: Apply slick and ground accel whenever the player receives knockback.
-        if (0 < gbTimer && gbTimer <= 5) {
+        if (0 < gbTimer && gbTimer <= 8) {
             frictionAccel = 0.0f;
             walkSpeed = WALKSPEED;
             accel = GROUND_ACCEL;
@@ -236,7 +277,9 @@ public abstract class PlayerTravelMixin extends LivingEntity {
         // VQ3
         MovementHelper.playerAccelerate (player, wishDir, AIRSPEED, AIR_ACCEL);
         // QW
-        MovementHelper.playerAccelerate (player, wishDir, AIRSTRAFE_SPEED, AIRSTRAFE_ACCEL);
+        if (Math.abs (player.getVelocity ().dotProduct (wishDir)) < AIRSTRAFE_SPEED)
+            MovementHelper.playerAccelerate (player, wishDir, AIRSTRAFE_SPEED, AIRSTRAFE_ACCEL);
+
         double newSpeed = player.getVelocity ().multiply (1.0, 0.0, 1.0).lengthSquared ();
         // Only apply the cap if the player has gained speed
         if (newSpeed > (horizontalSpeed * horizontalSpeed) && newSpeed > WALKSPEED * WALKSPEED) {
