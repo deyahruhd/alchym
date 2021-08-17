@@ -150,41 +150,52 @@ public class RevolverItem extends Item implements CustomAttackItem {
 
     @Override
     public int getSwingDuration (ItemStack stack) {
-        return 20; // rocket
-        //return 5; // plasma
+        //return 20; // rocket
+        return 5; // plasma
+        //return 5; // lightning
     }
 
     @Override
     public int getAttackCooldown (ItemStack stack) {
-        return 17; // rocket
-        //return 2; // plasma
+        //return 17; // rocket
+        return 2; // plasma
+        //return 1; // lightning
     }
 
     @Override
     public boolean autoUse (ItemStack stack) {
-        return false; // rocket
-        //return true; // plasma
+        //return false; // rocket
+        return true; // plasma
+        //return true; // lightning
     }
 
     @Environment (EnvType.CLIENT)
     @Override
     public boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d aimDir) {
-        // rocket
-        float projectileSpeed = MovementHelper.upsToSpt (925.f) * 1.25f;
-        float radius = 5.0f;
+        /* rocket
+        float projectileSpeed = MovementHelper.upsToSpt (925.f) * 1.5f;
+        float radius = 2.5f;
         double verticalKnockback = MovementHelper.upsToSpt (615.f);
         double horizontalKnockback = MovementHelper.upsToSpt (555.f);
         boolean skim = true;
         boolean icy = false;
-
-        /* plasma
+        //*/
+        // plasma
         float projectileSpeed = MovementHelper.upsToSpt (975.f * 2.f);
-        float radius = 1.3f;
+        float radius = 1.0f;
         double verticalKnockback = MovementHelper.upsToSpt (149.29f);
         double horizontalKnockback = MovementHelper.upsToSpt (48.75f);
         boolean skim = false;
         boolean icy = true;
-        */
+        //*/
+        /* lightning
+        float projectileSpeed = MovementHelper.upsToSpt (975.f * 15.3f);
+        float radius = 15.3f;
+        double verticalKnockback = MovementHelper.upsToSpt (149.29f);
+        double horizontalKnockback = MovementHelper.upsToSpt (97.5f);
+        boolean skim = false;
+        boolean icy = false;
+        //*/
 
         Vec3d eyePos = player.getPos ().add (0.0, player.getStandingEyeHeight (), 0.0);
         Vec3d initialSpawnPos = aimDir.multiply (projectileSpeed * 2.f).add (eyePos);
