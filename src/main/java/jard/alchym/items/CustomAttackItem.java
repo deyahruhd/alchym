@@ -22,6 +22,8 @@ public interface CustomAttackItem {
 
     int getAttackCooldown (ItemStack stack);
 
+    boolean autoUse (ItemStack stack);
+
     @Environment (EnvType.CLIENT)
     boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d aimDir);
 }

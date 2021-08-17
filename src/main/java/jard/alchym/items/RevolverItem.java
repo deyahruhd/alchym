@@ -127,14 +127,17 @@ public class RevolverItem extends Item implements CustomAttackItem {
     public Matrix4f getAnimMatrix (ItemStack stack, Arm arm, float progress) {
         float handedness = arm == Arm.RIGHT ? 1.f : -1.f;
 
+        float recoil = net.minecraft.util.math.MathHelper.clamp (getSwingDuration (stack) / 18.f, 0.1f, 1.f);
+        float squareRecoil = recoil * recoil;
+
         float progPower = progress * progress * progress;
 
-        float globalFactor = (1.f - progPower) / (1.f + 27.f * progPower * progPower * progPower);
+        float globalFactor = (1.f - progPower) / (1.f + 27.f * progPower * progPower * progPower) * squareRecoil;
 
-        float xRot      = MathHelper.quinticSpline (progress * 1.28f  * 1.25f,   0.123f, yRotCoeffs) * globalFactor;
+        float xRot      = MathHelper.quinticSpline (progress * 1.28f  * 1.25f,   0.123f, yRotCoeffs) * globalFactor * recoil;
         float xDisplace = MathHelper.quinticSpline (progress * 0.666f * 1.333f,  0.054f, xDisplaceCoeffs) * globalFactor;
         float yDisplace = MathHelper.quinticSpline (progress * 0.9f   * 1.1667f, 0.863f, yDisplaceCoeffs) * globalFactor;
-        float zDisplace = MathHelper.quinticSpline (progress * 1.25f,            0.09f, zDisplaceCoeffs) * globalFactor;
+        float zDisplace = MathHelper.quinticSpline (progress * 1.25f,            0.09f, zDisplaceCoeffs) * globalFactor / recoil;
 
         Matrix4f out = RenderHelper.IDENTITY_MATRIX.copy ();
         out.multiply (Vec3f.POSITIVE_Z.getDegreesQuaternion (xDisplace * 115.f * handedness));
@@ -147,33 +150,41 @@ public class RevolverItem extends Item implements CustomAttackItem {
 
     @Override
     public int getSwingDuration (ItemStack stack) {
-        return 20;
+        return 20; // rocket
+        //return 5; // plasma
     }
 
     @Override
     public int getAttackCooldown (ItemStack stack) {
-        // return 17; // rocket
-        return 2; // plasma
+        return 17; // rocket
+        //return 2; // plasma
+    }
+
+    @Override
+    public boolean autoUse (ItemStack stack) {
+        return false; // rocket
+        //return true; // plasma
     }
 
     @Environment (EnvType.CLIENT)
     @Override
     public boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d aimDir) {
         // rocket
-        // float projectileSpeed = MovementHelper.upsToSpt (925.f) * 1.25f;
-        // float radius = 5.0f;
-        // double verticalKnockback = MovementHelper.upsToSpt (555.f);
-        // double horizontalKnockback = MovementHelper.upsToSpt (555.f);
-        // boolean skim = true;
-        // boolean icy = false;
+        float projectileSpeed = MovementHelper.upsToSpt (925.f) * 1.25f;
+        float radius = 5.0f;
+        double verticalKnockback = MovementHelper.upsToSpt (615.f);
+        double horizontalKnockback = MovementHelper.upsToSpt (555.f);
+        boolean skim = true;
+        boolean icy = false;
 
-        // plasma
+        /* plasma
         float projectileSpeed = MovementHelper.upsToSpt (975.f * 2.f);
         float radius = 1.3f;
-        double verticalKnockback = MovementHelper.upsToSpt (195.f);
-        double horizontalKnockback = MovementHelper.upsToSpt (60.94f);
-        boolean skim = true;
+        double verticalKnockback = MovementHelper.upsToSpt (149.29f);
+        double horizontalKnockback = MovementHelper.upsToSpt (48.75f);
+        boolean skim = false;
         boolean icy = true;
+        */
 
         Vec3d eyePos = player.getPos ().add (0.0, player.getStandingEyeHeight (), 0.0);
         Vec3d initialSpawnPos = aimDir.multiply (projectileSpeed * 2.f).add (eyePos);
@@ -184,7 +195,7 @@ public class RevolverItem extends Item implements CustomAttackItem {
         Vec3d spawnPos = cast.getType () != HitResult.Type.MISS ? cast.getPos () : initialSpawnPos;
 
         if (cast.getType () == HitResult.Type.BLOCK) {
-            double len = net.minecraft.util.math.MathHelper.clamp (0.36 - 0.04 * radius, 0.1, 0.3);
+            double len = net.minecraft.util.math.MathHelper.clamp (0.34 - 0.04 * radius, 0.1, 0.3);
 
             Vec3d normal = new Vec3d (cast.getSide ().getUnitVector ()).multiply (len);
             spawnPos = spawnPos.add (normal);

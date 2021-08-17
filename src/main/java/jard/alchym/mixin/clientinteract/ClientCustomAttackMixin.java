@@ -3,18 +3,17 @@ package jard.alchym.mixin.clientinteract;
 import jard.alchym.client.MinecraftClientDataAccess;
 import jard.alchym.items.CustomAttackItem;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.Mouse;
 import net.minecraft.client.WindowEventHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.option.GameOptions;
 import net.minecraft.util.Hand;
 import net.minecraft.util.snooper.SnooperListener;
 import net.minecraft.util.thread.ReentrantThreadExecutor;
+import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyConstant;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /***
@@ -29,6 +28,12 @@ public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Ru
     protected int attackCooldown;
     @Shadow
     public ClientPlayerEntity player;
+    @Shadow
+    @Final
+    public GameOptions options;
+
+    @Shadow
+    private void doAttack() {}
 
     public ClientCustomAttackMixin (String string) {
         super (string);
@@ -42,16 +47,24 @@ public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Ru
                 && ((CustomAttackItem) player.getMainHandStack ().getItem ()).clientAttack (player, player.getMainHandStack (), player.getRotationVecClient ())) {
             attackCooldown = ((CustomAttackItem) player.getMainHandStack ().getItem ()).getAttackCooldown (player.getMainHandStack ());
             player.swingHand (Hand.MAIN_HAND);
+
+            player.handSwingTicks = 0;
             player.resetLastAttackedTicks ();
             info.cancel ();
         }
     }
 
     @Inject (method = "handleBlockBreaking", at = @At ("HEAD"), cancellable = true)
-    public void cancelBlockBreaking (boolean isMining, CallbackInfo info) {
-        if (! isMining && attackCooldown > 0
-                && ! player.getMainHandStack ().isEmpty ()
-                && player.getMainHandStack ().getItem () instanceof CustomAttackItem)
+    public void hookAutoUse (boolean isMining, CallbackInfo info) {
+        boolean isCustomAttackItem = ! player.getMainHandStack ().isEmpty ()
+                && player.getMainHandStack ().getItem () instanceof CustomAttackItem;
+
+        boolean autoUse = isCustomAttackItem && ((CustomAttackItem) player.getMainHandStack ().getItem ()).autoUse (player.getMainHandStack ());
+
+        if (options.keyAttack.isPressed () && attackCooldown <= 0 && autoUse)
+            doAttack ();
+
+        if (isCustomAttackItem)
             info.cancel ();
     }
 
