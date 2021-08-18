@@ -51,7 +51,7 @@ public abstract class FixCornerCollisionBugMixin implements Nameable, EntityLike
         // If it also turns out that movement.x != vec3d.x, then the X-component of the
         // velocity gets overridden with a non-zero value, even though it should've been clipped
         // by the previous if statement
-        if (movement.x != clippedMove.x)
-            setVelocity (0.D, vel.y, 0.D);
+        if (movement.x != clippedMove.x && movement.z != clippedMove.z)
+            setVelocity (0.D, vel.y, vel.z);
     }
 }
