@@ -5,6 +5,7 @@
   "mixins": [
     "BlockItemSolubleMixin",
     "ExtraPlayerDataMixin",
+    "FixCornerCollisionBugMixin",
     "FluidSolubleMixin",
     "ItemAttackCooldownMixin",
     "ItemStackMixin",
