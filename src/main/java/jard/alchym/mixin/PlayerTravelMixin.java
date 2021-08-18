@@ -76,6 +76,11 @@ public abstract class PlayerTravelMixin extends LivingEntity implements QuakeKno
     public PlayerAbilities abilities;
 
     @Shadow
+    public float prevStrideDistance;
+    @Shadow
+    public float strideDistance;
+
+    @Shadow
     public void increaseTravelMotionStats (double d, double e, double f) {}
     @Shadow
     public void incrementStat (Identifier stat) {}
@@ -118,6 +123,10 @@ public abstract class PlayerTravelMixin extends LivingEntity implements QuakeKno
             wasOnGround = player.isOnGround ();
 
             player.move (MovementType.SELF, player.getVelocity ());
+
+            // Fix view bobbing being obnoxious at high speeds
+            float delta = player.horizontalSpeed - player.prevHorizontalSpeed;
+            player.horizontalSpeed = player.prevHorizontalSpeed + (float) (Math.tanh (delta * 3.5651) / 3.5651);
 
             if (! player.isOnGround ())
                 preSkimVel = preSkimVel.add (0.0, player.getVelocity ().y, 0.0);
