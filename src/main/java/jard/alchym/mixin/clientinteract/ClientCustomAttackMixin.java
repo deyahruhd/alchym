@@ -7,6 +7,7 @@ import net.minecraft.client.WindowEventHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.util.Hand;
+import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.snooper.SnooperListener;
 import net.minecraft.util.thread.ReentrantThreadExecutor;
 import org.spongepowered.asm.mixin.Final;
@@ -24,6 +25,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  ***/
 @Mixin (MinecraftClient.class)
 public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Runnable> implements SnooperListener, WindowEventHandler, MinecraftClientDataAccess {
+    private int prevSwayProgress;
+    private int swayProgress;
+
     @Shadow
     protected int attackCooldown;
     @Shadow
@@ -33,7 +37,7 @@ public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Ru
     public GameOptions options;
 
     @Shadow
-    private void doAttack() {}
+    private void doAttack () {}
 
     public ClientCustomAttackMixin (String string) {
         super (string);
@@ -56,13 +60,20 @@ public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Ru
 
     @Inject (method = "handleBlockBreaking", at = @At ("HEAD"), cancellable = true)
     public void hookAutoUse (boolean isMining, CallbackInfo info) {
+        prevSwayProgress = swayProgress;
+
         boolean isCustomAttackItem = ! player.getMainHandStack ().isEmpty ()
                 && player.getMainHandStack ().getItem () instanceof CustomAttackItem;
 
         boolean autoUse = isCustomAttackItem && ((CustomAttackItem) player.getMainHandStack ().getItem ()).autoUse (player.getMainHandStack ());
 
-        if (options.keyAttack.isPressed () && attackCooldown <= 0 && autoUse)
-            doAttack ();
+        if (options.keyAttack.isPressed () && autoUse) {
+            swayProgress ++;
+
+            if (attackCooldown <= 0)
+                doAttack ();
+        } else if (swayProgress > 0)
+            swayProgress = Math.max (0, Math.min (11, swayProgress - 2));
 
         if (isCustomAttackItem)
             info.cancel ();
@@ -71,5 +82,10 @@ public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Ru
     @Override
     public int getAttackCooldown () {
         return attackCooldown;
+    }
+
+    @Override
+    public float getSwayProgress (float tickDelta) {
+        return (float) Math.tanh (0.1 * (double) MathHelper.lerp (tickDelta, prevSwayProgress, swayProgress));
     }
 }

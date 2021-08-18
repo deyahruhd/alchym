@@ -2,14 +2,12 @@ package jard.alchym.items;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
-import jard.alchym.client.ExtraPlayerDataAccess;
 import jard.alchym.client.QuakeKnockbackable;
 import jard.alchym.client.helper.RenderHelper;
 import jard.alchym.helper.MathHelper;
 import jard.alchym.helper.MovementHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -152,7 +150,7 @@ public class RevolverItem extends Item implements CustomAttackItem {
     public int getSwingDuration (ItemStack stack) {
         //return 20; // rocket
         return 5; // plasma
-        //return 5; // lightning
+        //return 3; // lightning
     }
 
     @Override
@@ -212,10 +210,13 @@ public class RevolverItem extends Item implements CustomAttackItem {
             spawnPos = spawnPos.add (normal);
         }
 
-        ParticleEffect effect = cast.getType () != HitResult.Type.MISS ? ParticleTypes.EXPLOSION : ParticleTypes.TOTEM_OF_UNDYING;
+        ParticleEffect effect = ParticleTypes.ELECTRIC_SPARK;
 
-        if (cast.getType() != HitResult.Type.MISS)
+        if (cast.getType() != HitResult.Type.MISS) {
+        //if (cast.getType () == HitResult.Type.BLOCK && player.world.getBlockState (cast.getBlockPos ()).getBlock () == Blocks.COPPER_BLOCK) {
             ((QuakeKnockbackable) player).radialKnockback (spawnPos, radius, verticalKnockback, horizontalKnockback, skim, icy);
+            effect = ParticleTypes.EXPLOSION;
+        }
 
         player.world.addParticle (effect, spawnPos.x, spawnPos.y, spawnPos.z, 0.f, 0.f, 0.f);
 

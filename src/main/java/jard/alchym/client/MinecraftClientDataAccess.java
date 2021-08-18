@@ -8,4 +8,5 @@ package jard.alchym.client;
  ***/
 public interface MinecraftClientDataAccess {
     int getAttackCooldown ();
+    float getSwayProgress (float tickDelta);
 }
