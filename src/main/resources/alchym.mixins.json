@@ -28,7 +28,7 @@
     "rendering.ItemUseAnimMixin",
     "rendering.MatrixStackMixin",
     "rendering.PlayerAnimMixin$1",
-    "rendering.PlayerAnimMixin$2",
+    "rendering.PlayerAnimMixin$2"
   ],
   "injectors": {
     "defaultRequire": 1
