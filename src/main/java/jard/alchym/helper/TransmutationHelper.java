@@ -27,6 +27,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 import net.minecraft.sound.SoundCategory;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
@@ -230,5 +231,11 @@ public class TransmutationHelper {
             return Fluids.LAVA;
         else
             return null;
+    }
+
+    public static Vec3d bumpFromSurface (BlockHitResult cast, double radius) {
+        double len = net.minecraft.util.math.MathHelper.clamp (0.34 - 0.04 * radius, 0.1, 0.3);
+        Vec3d normal = new Vec3d (cast.getSide ().getUnitVector ()).multiply (len);
+        return cast.getPos ().add(normal);
     }
 }

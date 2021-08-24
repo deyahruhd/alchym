@@ -3,9 +3,11 @@ package jard.alchym.items;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import jard.alchym.client.QuakeKnockbackable;
+import jard.alchym.client.helper.ClientRevolverHelper;
 import jard.alchym.client.helper.RenderHelper;
 import jard.alchym.helper.MathHelper;
 import jard.alchym.helper.MovementHelper;
+import jard.alchym.helper.TransmutationHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.entity.EquipmentSlot;
@@ -148,77 +150,30 @@ public class RevolverItem extends Item implements CustomAttackItem {
 
     @Override
     public int getSwingDuration (ItemStack stack) {
-        //return 20; // rocket
-        return 5; // plasma
+        return 20; // rocket
+        //return 5; // plasma
         //return 3; // lightning
     }
 
     @Override
     public int getAttackCooldown (ItemStack stack) {
-        //return 17; // rocket
-        return 2; // plasma
+        return 15; // rocket
+        //return 2; // plasma
         //return 1; // lightning
     }
 
     @Override
     public boolean autoUse (ItemStack stack) {
-        //return false; // rocket
-        return true; // plasma
+        return false; // rocket
+        //return true; // plasma
         //return true; // lightning
     }
 
     @Environment (EnvType.CLIENT)
     @Override
-    public boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d aimDir) {
-        /* rocket
-        float projectileSpeed = MovementHelper.upsToSpt (925.f) * 1.5f;
-        float radius = 2.5f;
-        double verticalKnockback = MovementHelper.upsToSpt (615.f);
-        double horizontalKnockback = MovementHelper.upsToSpt (555.f);
-        boolean skim = true;
-        boolean icy = false;
-        //*/
-        // plasma
-        float projectileSpeed = MovementHelper.upsToSpt (975.f * 2.f);
-        float radius = 1.0f;
-        double verticalKnockback = MovementHelper.upsToSpt (149.29f);
-        double horizontalKnockback = MovementHelper.upsToSpt (48.75f);
-        boolean skim = false;
-        boolean icy = true;
-        //*/
-        /* lightning
-        float projectileSpeed = MovementHelper.upsToSpt (975.f * 15.3f);
-        float radius = 15.3f;
-        double verticalKnockback = MovementHelper.upsToSpt (149.29f);
-        double horizontalKnockback = MovementHelper.upsToSpt (97.5f);
-        boolean skim = false;
-        boolean icy = false;
-        //*/
-
-        Vec3d eyePos = player.getPos ().add (0.0, player.getStandingEyeHeight (), 0.0);
-        Vec3d initialSpawnPos = aimDir.multiply (projectileSpeed * 2.f).add (eyePos);
-
-        // Trace from player eye pos to projectile spawn position
-        BlockHitResult cast = player.world.raycast (new RaycastContext (eyePos, initialSpawnPos, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.ANY, player));
-
-        Vec3d spawnPos = cast.getType () != HitResult.Type.MISS ? cast.getPos () : initialSpawnPos;
-
-        if (cast.getType () == HitResult.Type.BLOCK) {
-            double len = net.minecraft.util.math.MathHelper.clamp (0.34 - 0.04 * radius, 0.1, 0.3);
-
-            Vec3d normal = new Vec3d (cast.getSide ().getUnitVector ()).multiply (len);
-            spawnPos = spawnPos.add (normal);
-        }
-
-        ParticleEffect effect = ParticleTypes.ELECTRIC_SPARK;
-
-        if (cast.getType() != HitResult.Type.MISS) {
-        //if (cast.getType () == HitResult.Type.BLOCK && player.world.getBlockState (cast.getBlockPos ()).getBlock () == Blocks.COPPER_BLOCK) {
-            ((QuakeKnockbackable) player).radialKnockback (spawnPos, radius, verticalKnockback, horizontalKnockback, skim, icy);
-            effect = ParticleTypes.EXPLOSION;
-        }
-
-        player.world.addParticle (effect, spawnPos.x, spawnPos.y, spawnPos.z, 0.f, 0.f, 0.f);
+    public boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d eyePos, Vec3d aimDir) {
+        // TODO: We need to extract the relevant ammo info from the stack, then pass it to ClientRevolverHelper#handleClientRevolver
+        ClientRevolverHelper.handleClientRevolver (player, eyePos, aimDir);
 
         return true;
     }

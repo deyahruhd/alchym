@@ -75,6 +75,12 @@ public class AlchymReference {
         }
     }
 
+    public enum Entities {
+        REVOLVER_BULLET;
+
+        public String getName () { return name ().toLowerCase(); }
+    }
+
     public static class WorldGen {
         public enum Features {
             NITER_DEPOSIT,

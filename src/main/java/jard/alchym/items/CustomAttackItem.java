@@ -25,5 +25,5 @@ public interface CustomAttackItem {
     boolean autoUse (ItemStack stack);
 
     @Environment (EnvType.CLIENT)
-    boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d aimDir);
+    boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d eyePos, Vec3d aimDir);
 }

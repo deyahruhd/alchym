@@ -15,6 +15,7 @@ public class InitAlchym {
     public InitBookPages pages = new InitBookPages (this);
     public InitFluids fluids = new InitFluids (this);
     public InitItems items = new InitItems (this);
+    public InitEntities entities = new InitEntities (this);
     public InitPackets packets = new InitPackets (this);
     public InitSounds sounds = new InitSounds (this);
     public InitTransmutationRecipes transmutationRecipes = new InitTransmutationRecipes (this);
@@ -24,6 +25,7 @@ public class InitAlchym {
         fluids.initialize ();
         blocks.initialize ();
         items.initialize ();
+        entities.initialize ();
         blockEntities.initialize ();
         transmutationRecipes.initialize ();
         sounds.initialize ();

@@ -48,7 +48,7 @@ public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Ru
         if (attackCooldown <= 0
                 && ! player.getMainHandStack ().isEmpty ()
                 && player.getMainHandStack ().getItem () instanceof CustomAttackItem
-                && ((CustomAttackItem) player.getMainHandStack ().getItem ()).clientAttack (player, player.getMainHandStack (), player.getRotationVecClient ())) {
+                && ((CustomAttackItem) player.getMainHandStack ().getItem ()).clientAttack (player, player.getMainHandStack (), MinecraftClient.getInstance ().gameRenderer.getCamera ().getPos (), player.getRotationVecClient ())) {
             attackCooldown = ((CustomAttackItem) player.getMainHandStack ().getItem ()).getAttackCooldown (player.getMainHandStack ());
             player.swingHand (Hand.MAIN_HAND);
 
