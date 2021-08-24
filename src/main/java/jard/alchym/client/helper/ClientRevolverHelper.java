@@ -63,7 +63,6 @@ public class ClientRevolverHelper {
             player.world.addParticle (ParticleTypes.EXPLOSION, spawnPos.x, spawnPos.y, spawnPos.z, 0., 0., 0.);
         } else {
             RevolverBulletEntity clientBullet = new RevolverBulletEntity (player.world, spawnPos, aimDir.normalize ().multiply (projectileSpeed));
-            System.out.println (player.world.getClass ().getName ());
             ((ClientWorld) player.world).addEntity (player.world.random.nextInt (), clientBullet);
         }
     }

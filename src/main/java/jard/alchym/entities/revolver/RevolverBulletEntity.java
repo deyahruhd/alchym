@@ -15,6 +15,7 @@ import net.minecraft.network.Packet;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
+import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
@@ -40,16 +41,13 @@ public class RevolverBulletEntity extends Entity {
     public RevolverBulletEntity (EntityType <Entity> type, World world) {
         super (type, world);
 
-        System.out.println ("Constructing 1");
-
         kill ();
     }
 
     public RevolverBulletEntity (World world, Vec3d spawnPos, Vec3d vel) {
         super (Alchym.content ().entities.revolverBullet, world);
 
-        System.out.println ("Constructing 2");
-
+        setBoundingBox (new Box (0.D, 0.D, 0.D, 0.D, 0.D, 0.D));
         setPos (spawnPos.x, spawnPos.y, spawnPos.z);
         setVelocity (vel);
     }
@@ -97,7 +95,9 @@ public class RevolverBulletEntity extends Entity {
             kill ();
         }
 
+        Vec3d preVel = this.getVelocity ();
         this.move (MovementType.SELF, this.getVelocity ());
+        this.setVelocity (preVel);
 
         super.tick ();
     }

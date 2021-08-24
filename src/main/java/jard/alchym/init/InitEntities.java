@@ -28,6 +28,6 @@ public class InitEntities extends InitAbstract <EntityType <?>> {
     }
 
     private EntityType from (EntityType.EntityFactory<? extends Entity> entity, SpawnGroup spawnGroup) {
-        return FabricEntityTypeBuilder.create (spawnGroup, entity).dimensions (EntityDimensions.fixed (0.000001f, 0.000001f)).build ();
+        return FabricEntityTypeBuilder.create (spawnGroup, entity).dimensions (EntityDimensions.fixed (0.0f, 0.0f)).build ();
     }
 }
