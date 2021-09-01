@@ -2,6 +2,7 @@ package jard.alchym.entities.revolver;
 
 import jard.alchym.Alchym;
 import jard.alchym.client.QuakeKnockbackable;
+import jard.alchym.helper.MathHelper;
 import jard.alchym.helper.MovementHelper;
 import jard.alchym.helper.TransmutationHelper;
 import net.minecraft.client.MinecraftClient;
@@ -17,6 +18,7 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3f;
 import net.minecraft.world.RaycastContext;
 import net.minecraft.world.World;
 
@@ -38,18 +40,27 @@ import java.util.List;
  *  Created by jard at 15:33 on August 23, 2021.
  ***/
 public class RevolverBulletEntity extends Entity {
+    public final Vec3d clientStartOffset;
+
     public RevolverBulletEntity (EntityType <Entity> type, World world) {
         super (type, world);
 
+        clientStartOffset = Vec3d.ZERO;
         kill ();
     }
 
-    public RevolverBulletEntity (World world, Vec3d spawnPos, Vec3d vel) {
+    public RevolverBulletEntity (World world, Vec3d spawnPos, Vec3d clientStartPos, Vec3d vel) {
         super (Alchym.content ().entities.revolverBullet, world);
 
+        this.clientStartOffset = clientStartPos.subtract (spawnPos);
         setBoundingBox (new Box (0.D, 0.D, 0.D, 0.D, 0.D, 0.D));
         setPos (spawnPos.x, spawnPos.y, spawnPos.z);
         setVelocity (vel);
+    }
+
+    public Vec3d getClientStartOffset (float tickDelta) {
+        float smoothAge = (float) age + tickDelta;
+        return MathHelper.lerp (clientStartOffset, Vec3d.ZERO, net.minecraft.util.math.MathHelper.clamp (Math.tanh (smoothAge / 3.f), 0.f, 1.f));
     }
 
     @Override
@@ -57,22 +68,11 @@ public class RevolverBulletEntity extends Entity {
         if (! world.isClient)
             return;
 
-        for (int i = 0; i < 3; ++ i) {
-            if (this.age == 1)
-                i = 3;
-
-            double subTicks = -(3. - i) / 3.;
-            double pseudoSmoothTime = this.getUuid ().hashCode () + this.age + subTicks;
-            double piSinTime = Math.PI * Math.sin (pseudoSmoothTime * 0.1);
-            piSinTime *= piSinTime;
-            Vec3d randomTransverseDir = new Vec3d (
-                    Math.cos  (piSinTime * 0.3)  * 0.3,
-                    Math.sin  (piSinTime * 0.23) * 0.5,
-                    Math.tanh (piSinTime * 0.89) * 0.7).normalize ().crossProduct (this.getVelocity ().normalize ());
-            Vec3d particlePos = this.getPos ().add (this.getVelocity ().multiply (subTicks));
-            Vec3d particleVel = randomTransverseDir.multiply (0.075)
-                    .add (new Vec3d (0.0, 0.005, 0.0));
-            world.addParticle (ParticleTypes.LARGE_SMOKE, true,
+        if (random.nextDouble () < 0.5) {
+            Vec3d particlePos = this.getPos ().add (this.getVelocity ().multiply (Math.random () * 0.35)).add (getClientStartOffset (MinecraftClient.getInstance ().getTickDelta ()));
+            Vec3d particleVel = new Vec3d (0.0, 0.015, 0.0)
+                    .add (new Vec3d (random.nextDouble () - 0.5, random.nextDouble () - 0.5, random.nextDouble () - 0.5).normalize ().crossProduct (this.getVelocity ()).multiply (Math.random () * 0.015));
+            world.addParticle (ParticleTypes.SNOWFLAKE, true,
                     particlePos.x, particlePos.y, particlePos.z,
                     particleVel.x, particleVel.y, particleVel.z);
         }
@@ -82,16 +82,37 @@ public class RevolverBulletEntity extends Entity {
 
         if (cast.getType () == HitResult.Type.BLOCK) {
             // TODO: Move all this into the bullet object
+            /*
             float radius = 3.5f;
             double verticalKnockback = MovementHelper.upsToSpt (755.f);
             double horizontalKnockback = MovementHelper.upsToSpt (555.f);
             boolean skim = true;
-            boolean icy = false;
+            boolean icy = false;*/
+            float radius = 1.0f;
+            double verticalKnockback = MovementHelper.upsToSpt (149.29f);
+            double horizontalKnockback = MovementHelper.upsToSpt (48.75f);
+            boolean skim = false;
+            boolean icy = true;
 
-            Vec3d hitPos = TransmutationHelper.bumpFromSurface (cast, radius);
+            Vec3d castPos = TransmutationHelper.bumpFromSurface (cast, 15.f);
+            Vec3d hitPos  = TransmutationHelper.bumpFromSurface (cast, radius);
+
+            for (int i = 0; i < 10; ++ i) {
+                double magnitude = 1. / (double) (i + 1);
+                Vec3d particleVel = new Vec3d (0.0, 0.005, 0.0)
+                        .add (new Vec3d (cast.getSide ().getUnitVector ()).multiply (0.125))
+                        .add (new Vec3d (
+                                random.nextDouble () - 0.5,
+                                random.nextDouble () - 0.5,
+                                random.nextDouble () - 0.5).normalize ().crossProduct (this.getVelocity ())
+                                .multiply (Math.random () * 0.15 * magnitude))
+                        .add (this.getVelocity ().multiply (0.10));
+                world.addParticle (ParticleTypes.SNOWFLAKE, true,
+                        castPos.x, castPos.y, castPos.z,
+                        particleVel.x, particleVel.y, particleVel.z);
+            }
 
             ((QuakeKnockbackable) MinecraftClient.getInstance ().player).radialKnockback (hitPos, radius, verticalKnockback, horizontalKnockback, skim, icy);
-            world.addParticle (ParticleTypes.EXPLOSION, hitPos.x, hitPos.y, hitPos.z, 0., 0., 0.);
             kill ();
         }
 
@@ -119,5 +140,10 @@ public class RevolverBulletEntity extends Entity {
     @Override
     public Packet <?> createSpawnPacket () {
         return null;
+    }
+
+    @Override
+    public boolean shouldRender (double x, double y, double z) {
+        return true;
     }
 }

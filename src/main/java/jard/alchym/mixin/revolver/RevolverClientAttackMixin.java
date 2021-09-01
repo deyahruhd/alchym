@@ -1,7 +1,7 @@
-package jard.alchym.mixin.clientinteract;
+package jard.alchym.mixin.revolver;
 
 import jard.alchym.client.MinecraftClientDataAccess;
-import jard.alchym.items.CustomAttackItem;
+import jard.alchym.items.RevolverItem;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.WindowEventHandler;
 import net.minecraft.client.network.ClientPlayerEntity;
@@ -18,13 +18,13 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /***
- *  ClientCustomAttackMixin
- *  Allows {@link CustomAttackItem} implementations to override the client-sided player attack behavior.
+ *  RevolverClientAttackMixin
+ *  Allows the {@link jard.alchym.items.RevolverItem} to override the client-sided player attack behavior.
  *
  *  Created by jard at 01:54 on July, 28, 2021.
  ***/
 @Mixin (MinecraftClient.class)
-public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Runnable> implements SnooperListener, WindowEventHandler, MinecraftClientDataAccess {
+public abstract class RevolverClientAttackMixin extends ReentrantThreadExecutor<Runnable> implements SnooperListener, WindowEventHandler, MinecraftClientDataAccess {
     private int prevSwayProgress;
     private int swayProgress;
 
@@ -39,7 +39,7 @@ public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Ru
     @Shadow
     private void doAttack () {}
 
-    public ClientCustomAttackMixin (String string) {
+    public RevolverClientAttackMixin (String string) {
         super (string);
     }
 
@@ -47,9 +47,9 @@ public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Ru
     public void hookAttack (CallbackInfo info) {
         if (attackCooldown <= 0
                 && ! player.getMainHandStack ().isEmpty ()
-                && player.getMainHandStack ().getItem () instanceof CustomAttackItem
-                && ((CustomAttackItem) player.getMainHandStack ().getItem ()).clientAttack (player, player.getMainHandStack (), MinecraftClient.getInstance ().gameRenderer.getCamera ().getPos (), player.getRotationVecClient ())) {
-            attackCooldown = ((CustomAttackItem) player.getMainHandStack ().getItem ()).getAttackCooldown (player.getMainHandStack ());
+                && player.getMainHandStack ().getItem () instanceof RevolverItem
+                && ((RevolverItem) player.getMainHandStack ().getItem ()).clientAttack (player, player.getMainHandStack (), MinecraftClient.getInstance ().gameRenderer.getCamera ().getPos (), player.getRotationVecClient ())) {
+            attackCooldown = ((RevolverItem) player.getMainHandStack ().getItem ()).getAttackCooldown (player.getMainHandStack ());
             player.swingHand (Hand.MAIN_HAND);
 
             player.handSwingTicks = 0;
@@ -62,10 +62,10 @@ public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Ru
     public void hookAutoUse (boolean isMining, CallbackInfo info) {
         prevSwayProgress = swayProgress;
 
-        boolean isCustomAttackItem = ! player.getMainHandStack ().isEmpty ()
-                && player.getMainHandStack ().getItem () instanceof CustomAttackItem;
+        boolean isRevolverItem = ! player.getMainHandStack ().isEmpty ()
+                && player.getMainHandStack ().getItem () instanceof RevolverItem;
 
-        boolean autoUse = isCustomAttackItem && ((CustomAttackItem) player.getMainHandStack ().getItem ()).autoUse (player.getMainHandStack ());
+        boolean autoUse = isRevolverItem && ((RevolverItem) player.getMainHandStack ().getItem ()).autoUse (player.getMainHandStack ());
 
         if (options.keyAttack.isPressed () && autoUse) {
             swayProgress ++;
@@ -75,7 +75,7 @@ public abstract class ClientCustomAttackMixin extends ReentrantThreadExecutor<Ru
         } else if (swayProgress > 0)
             swayProgress = Math.max (0, Math.min (11, swayProgress - 2));
 
-        if (isCustomAttackItem)
+        if (isRevolverItem)
             info.cancel ();
     }
 

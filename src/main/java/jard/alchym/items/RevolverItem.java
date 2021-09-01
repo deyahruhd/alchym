@@ -10,6 +10,7 @@ import jard.alchym.helper.MovementHelper;
 import jard.alchym.helper.TransmutationHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
@@ -33,7 +34,7 @@ import net.minecraft.world.RaycastContext;
  *
  *  Created by jard at 8:33 PM on April 03, 2019.
  ***/
-public class RevolverItem extends Item implements CustomAttackItem {
+public class RevolverItem extends Item {
     private static final float [][] yRotCoeffs = {
             {
                     0.f,
@@ -121,10 +122,28 @@ public class RevolverItem extends Item implements CustomAttackItem {
         return equipmentSlot == EquipmentSlot.MAINHAND ? this.attributeModifiers : super.getAttributeModifiers (equipmentSlot);
     }
 
+    public int getSwingDuration (ItemStack stack) {
+        //return 20; // rocket
+        return 5; // plasma
+        //return 3; // lightning
+    }
 
+    public int getAttackCooldown (ItemStack stack) {
+        //return 16; // rocket
+        return 2; // plasma
+        //return 1; // lightning
+    }
 
-    @Override
+    public boolean autoUse (ItemStack stack) {
+        //return false; // rocket
+        return true; // plasma
+        //return true; // lightning
+    }
+
+    @Environment (EnvType.CLIENT)
     public Matrix4f getAnimMatrix (ItemStack stack, Arm arm, float progress) {
+        progress = (float) Math.pow (progress, 1.3);
+
         float handedness = arm == Arm.RIGHT ? 1.f : -1.f;
 
         float recoil = net.minecraft.util.math.MathHelper.clamp (getSwingDuration (stack) / 18.f, 0.1f, 1.f);
@@ -148,32 +167,10 @@ public class RevolverItem extends Item implements CustomAttackItem {
         return out;
     }
 
-    @Override
-    public int getSwingDuration (ItemStack stack) {
-        return 20; // rocket
-        //return 5; // plasma
-        //return 3; // lightning
-    }
-
-    @Override
-    public int getAttackCooldown (ItemStack stack) {
-        return 15; // rocket
-        //return 2; // plasma
-        //return 1; // lightning
-    }
-
-    @Override
-    public boolean autoUse (ItemStack stack) {
-        return false; // rocket
-        //return true; // plasma
-        //return true; // lightning
-    }
-
     @Environment (EnvType.CLIENT)
-    @Override
     public boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d eyePos, Vec3d aimDir) {
         // TODO: We need to extract the relevant ammo info from the stack, then pass it to ClientRevolverHelper#handleClientRevolver
-        ClientRevolverHelper.handleClientRevolver (player, eyePos, aimDir);
+        ClientRevolverHelper.handleClientRevolver ((ClientPlayerEntity) player, stack, player.getMainArm (), eyePos, aimDir);
 
         return true;
     }

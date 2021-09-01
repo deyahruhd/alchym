@@ -1,0 +1,5 @@
+# Blender MTL File: 'ice.blend'
+# Material Count: 1
+
+newmtl ice_shard_texture
+map_Kd alchym:bullet/ice_shard

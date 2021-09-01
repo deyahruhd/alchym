@@ -3,7 +3,11 @@ package jard.alchym.client.helper;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import jard.alchym.AlchymReference;
+import jard.alchym.client.MatrixStackAccess;
+import jard.alchym.client.MinecraftClientDataAccess;
+import jard.alchym.items.RevolverItem;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
@@ -11,7 +15,9 @@ import net.minecraft.client.render.model.json.ModelTransformation;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.texture.TextureManager;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Arm;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.Pair;
 import net.minecraft.util.math.*;
@@ -86,6 +92,56 @@ public class RenderHelper {
         toEyeSpace.translate (-camera.getPos ().x, -camera.getPos ().y, -camera.getPos ().z);
 
         return toEyeSpace;
+    }
+
+    public static MatrixStack getRevolverTransform (ItemStack item, PlayerEntity player, Arm arm, float tickDelta, float swingProgress) {
+        MatrixStack stack = new MatrixStack ();
+
+        if (item.getItem () instanceof RevolverItem) {
+            if (((RevolverItem) item.getItem ()).autoUse (item)) {
+                int fireRate = ((RevolverItem) item.getItem ()).getAttackCooldown (item);
+                float smoothTime = (float) player.age + tickDelta;
+                float sideRecoil = Math.min (smoothTime % (float) fireRate, 1.f);
+
+                float smoothSway = ((MinecraftClientDataAccess) MinecraftClient.getInstance ()).getSwayProgress (tickDelta);
+                float swaySquared = smoothSway * smoothSway;
+
+                if (! MinecraftClient.getInstance ().options.keyAttack.isPressed ()) {
+                    swaySquared = smoothSway;
+                    sideRecoil = 0.f;
+                }
+
+                stack.translate (
+                        0.004 * Math.sin (smoothTime * 0.03) * Math.sin (2. * Math.PI * sideRecoil),
+                        0.004 * Math.sin (2. * Math.PI * sideRecoil),
+                        0.0);
+                stack.translate (
+                        0.035 * Math.sin (smoothTime * 0.12) * swaySquared,
+                        0.01 * Math.sin (smoothTime * 0.08) * swaySquared - 0.08 * swaySquared,
+                        0.02 * Math.sin (smoothTime * 0.16) * swaySquared + 0.04 * swaySquared);
+                stack.multiply (Vec3f.POSITIVE_Y.getDegreesQuaternion (- 2.f * (float) (Math.sin (smoothTime * 0.12) * swaySquared)));
+            }
+
+            ((MatrixStackAccess) stack).multiply (((RevolverItem) item.getItem ()).getAnimMatrix (item, arm, swingProgress));
+        }
+
+        return stack;
+    }
+
+    public static MatrixStack getHandTransform (ItemStack item, ClientPlayerEntity player, Arm arm) {
+        MatrixStack stack = new MatrixStack ();
+
+        float tickDelta = MinecraftClient.getInstance ().getTickDelta ();
+        float h = MathHelper.lerp (tickDelta, player.lastRenderPitch, player.renderPitch);
+        float i = MathHelper.lerp (tickDelta, player.lastRenderYaw, player.renderYaw);
+        stack.multiply (Vec3f.POSITIVE_X.getDegreesQuaternion ((player.getPitch (tickDelta) - h) * 0.1f));
+        stack.multiply (Vec3f.POSITIVE_Y.getDegreesQuaternion ((player.getYaw (tickDelta) - i) * 0.1f));
+        MinecraftClient.getInstance ().getItemRenderer ().getHeldItemModel (item, player.world, player, 0)
+                .getTransformation ()
+                .getTransformation (arm == Arm.RIGHT ? ModelTransformation.Mode.FIRST_PERSON_RIGHT_HAND : ModelTransformation.Mode.FIRST_PERSON_LEFT_HAND)
+                .apply (arm == Arm.LEFT, stack);
+        stack.translate(-0.5 * 1.12 * (arm == Arm.LEFT ? 1. : -1.), -0.5 * 1.12, -0.5 * 1.12);
+        return stack;
     }
 
     private static final double[] LIGHTNING_STEPS = {

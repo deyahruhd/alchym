@@ -1,6 +1,6 @@
-package jard.alchym.mixin;
+package jard.alchym.mixin.revolver;
 
-import jard.alchym.items.CustomAttackItem;
+import jard.alchym.items.RevolverItem;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
 import net.minecraft.entity.LivingEntity;
@@ -12,15 +12,15 @@ import org.spongepowered.asm.mixin.injection.Constant;
 import org.spongepowered.asm.mixin.injection.ModifyConstant;
 
 /***
- *  ItemSwingDurationMixin
+ *  RevolverSwingDurationMixin
  *  Replaces the hardcoded 6-tick swing duration with a custom swing duration defined by instances of
- *  {@link jard.alchym.items.CustomAttackItem}.
+ *  {@link jard.alchym.items.RevolverItem}.
  *
  *  Created by jard at 20:09 on June, 07, 2021.
  ***/
 @Mixin (LivingEntity.class)
-public abstract class ItemSwingDurationMixin extends Entity {
-    public ItemSwingDurationMixin (EntityType<?> entityType, World world) {
+public abstract class RevolverSwingDurationMixin extends Entity {
+    public RevolverSwingDurationMixin (EntityType<?> entityType, World world) {
         super (entityType, world);
     }
 
@@ -33,8 +33,8 @@ public abstract class ItemSwingDurationMixin extends Entity {
     public int replaceDefaultSwingDuration (int old) {
         ItemStack stack = getMainHandStack ();
 
-        if (! stack.isEmpty () && stack.getItem () instanceof CustomAttackItem) {
-            return ((CustomAttackItem) stack.getItem ()).getSwingDuration (stack);
+        if (! stack.isEmpty () && stack.getItem () instanceof RevolverItem) {
+            return ((RevolverItem) stack.getItem ()).getSwingDuration (stack);
         }
 
         return old;

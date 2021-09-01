@@ -7,28 +7,30 @@
     "ExtraPlayerDataMixin",
     "FixCornerCollisionBugMixin",
     "FluidSolubleMixin",
-    "ItemAttackCooldownMixin",
     "ItemStackMixin",
-    "ItemSwingDurationMixin",
     "PlayerJumpCooldownMixin",
     "PlayerTravelMixin",
-    "RevolverHitsoundMixin",
+
+    "revolver.RevolverAttackCooldownMixin",
+    "revolver.RevolverSwingDurationMixin",
+    "revolver.RevolverHitsoundMixin",
 
     "stacklimit.BumpStackLimitMixin$1",
     "stacklimit.BumpStackLimitMixin$2",
     "stacklimit.InventoryMixin"
   ],
   "client": [
-    "clientinteract.ClientCustomAttackMixin",
     "clientinteract.ClientResetCooldownMixin",
     "clientinteract.MouseResetCooldownMixin",
 
     "rendering.DynamicModelLoaderMixin",
     "rendering.EnableStencilMixin",
-    "rendering.ItemUseAnimMixin",
     "rendering.MatrixStackMixin",
     "rendering.PlayerAnimMixin$1",
-    "rendering.PlayerAnimMixin$2"
+    "rendering.PlayerAnimMixin$2",
+
+    "revolver.RevolverClientAttackMixin",
+    "revolver.RevolverUseAnimMixin"
   ],
   "injectors": {
     "defaultRequire": 1

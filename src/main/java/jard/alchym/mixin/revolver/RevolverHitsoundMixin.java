@@ -1,4 +1,4 @@
-package jard.alchym.mixin;
+package jard.alchym.mixin.revolver;
 
 import jard.alchym.AlchymReference;
 import jard.alchym.items.RevolverItem;

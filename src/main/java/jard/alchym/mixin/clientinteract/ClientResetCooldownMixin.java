@@ -18,9 +18,6 @@ public abstract class ClientResetCooldownMixin {
     protected int attackCooldown;
     @ModifyConstant (method = "tick", constant = @Constant (intValue = 10000))
     public int revertClientResettingCooldownForWhateverReason (int old) {
-        if (attackCooldown > 0)
-            attackCooldown --;
-
         return attackCooldown;
     }
 }
