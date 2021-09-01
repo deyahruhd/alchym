@@ -181,8 +181,10 @@ public abstract class PlayerTravelMixin extends LivingEntity implements QuakeKno
         Vec3d to = MovementHelper.getKnockbackTo ((ClientPlayerEntity) (Object) this, from, radius);
         Vec3d dir = to.subtract (from);
 
+        double radiusPow = Math.pow (radius, 1.414213562);
+
         double scale = net.minecraft.util.math.MathHelper.clamp (
-                (radius * radius - dir.lengthSquared ()) / (radius * radius), 0.0, 1.0);
+                (radiusPow - Math.pow (dir.length (), 1.414213562)) / radiusPow, 0.0, 1.0);
         Vec3d knockback = dir
                 .normalize ().multiply (horizontalStrength * scale, verticalStrength * scale, horizontalStrength * scale);
 

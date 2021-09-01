@@ -34,9 +34,9 @@ public class MovementHelper {
         double verticalOffset = Math.min (radius, 0.25);
 
         return new Vec3d (
-                MathHelper.clamp (from.x, player.getX (), player.getX ()),
+                MathHelper.clamp (from.x, player.getX () - verticalOffset, player.getX () + verticalOffset),
                 MathHelper.clamp (from.y, player.getY () + (verticalOffset * 1.5), player.getY () + player.getHeight () - verticalOffset),
-                MathHelper.clamp (from.z, player.getZ (), player.getZ ()));
+                MathHelper.clamp (from.z, player.getZ () - verticalOffset, player.getZ () + verticalOffset));
     }
 
     public static void playerFriction (ClientPlayerEntity player, float friction, float stopSpeed) {
