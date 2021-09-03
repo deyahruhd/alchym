@@ -207,7 +207,7 @@ public class RevolverItem extends Item {
 
         };
         RevolverSplashHitFunction splash    = (vel, hitPos, hitNormal, visualPos, world, random, targets) -> {
-            if (targets.length == 1) {
+            if (world.isClient && targets.length == 1) {
                 ClientPlayerEntity target = (ClientPlayerEntity) targets[0];
                 ((QuakeKnockbackable) target).radialKnockback (hitPos, radius, verticalKnockback, horizontalKnockback, skim, icy);
             }
@@ -257,9 +257,9 @@ public class RevolverItem extends Item {
 
             List <LivingEntity> affectedEntities = player.world.getEntitiesByType (
                     TypeFilter.instanceOf (LivingEntity.class),
-                    new Box (spawnPos.subtract (radius, radius, radius), spawnPos.add (radius, radius, radius)),
+                    new Box (spawnPos.subtract (2. * radius, 2. * radius, 2. * radius), spawnPos.add (2. * radius, 2. * radius, 2. * radius)),
                     livingEntity -> {
-                        boolean condition = livingEntity.squaredDistanceTo (splashPos) <= (radius * radius);
+                        boolean condition = livingEntity.squaredDistanceTo (splashPos) <= (4. * radius * radius);
                         if (player.world.isClient)
                             condition = condition && livingEntity == player;
 

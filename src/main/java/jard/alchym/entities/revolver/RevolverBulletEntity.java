@@ -102,9 +102,9 @@ public class RevolverBulletEntity extends Entity {
 
             List <LivingEntity> affectedEntities = world.getEntitiesByType (
                     TypeFilter.instanceOf (LivingEntity.class),
-                    new Box (hitPos.subtract (radius, radius, radius), hitPos.add (radius, radius, radius)),
+                    new Box (hitPos.subtract (2. * radius, 2. * radius, 2. * radius), hitPos.add (2. * radius, 2. * radius, 2. * radius)),
                     livingEntity -> {
-                        boolean condition = livingEntity.squaredDistanceTo (hitPos) <= (radius * radius);
+                        boolean condition = livingEntity.squaredDistanceTo (hitPos) <= (4. * radius * radius);
                         if (world.isClient)
                             condition = condition && livingEntity == MinecraftClient.getInstance ().player;
 

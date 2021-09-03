@@ -41,6 +41,11 @@ public class MathHelper {
         return polynomial;
     }
 
+    // Similar to 1/r^n, except that values between -1 to 1 are capped so f(r) approaches 1 as r approaches 0.
+    public static float softcorePotential (float r, float n, float s) {
+        return 1.f / (float) Math.pow (1.f + Math.pow (r, n * s), 1.f / s);
+    }
+
     public static Vec3d castToBlockEdge (Vec3d initial, BlockPos blockPos, Direction side, float width) {
         Vec3d blockCenter = new Vec3d (blockPos.getX () + 0.5, blockPos.getY () + 0.5, blockPos.getZ () + 0.5);
         Vec3d result = initial.subtract (blockCenter);

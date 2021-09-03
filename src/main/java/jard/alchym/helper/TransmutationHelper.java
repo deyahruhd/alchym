@@ -234,7 +234,7 @@ public class TransmutationHelper {
     }
 
     public static Vec3d bumpFromSurface (BlockHitResult cast, double radius) {
-        double len = net.minecraft.util.math.MathHelper.clamp (0.34 - 0.04 * radius, 0.1, 0.3);
+        double len = net.minecraft.util.math.MathHelper.clamp (0.34 - 0.08 * radius, 0.1, 0.3);
         Vec3d normal = new Vec3d (cast.getSide ().getUnitVector ()).multiply (len);
         return cast.getPos ().add(normal);
     }

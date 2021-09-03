@@ -31,12 +31,10 @@ public class MovementHelper {
     }
 
     public static Vec3d getKnockbackTo (ClientPlayerEntity player, Vec3d from, double radius) {
-        double verticalOffset = Math.min (radius, 0.25);
-
         return new Vec3d (
-                MathHelper.clamp (from.x, player.getX () - verticalOffset, player.getX () + verticalOffset),
-                MathHelper.clamp (from.y, player.getY () + (verticalOffset * 1.5), player.getY () + player.getHeight () - verticalOffset),
-                MathHelper.clamp (from.z, player.getZ () - verticalOffset, player.getZ () + verticalOffset));
+                MathHelper.clamp (from.x, player.getX () - player.getWidth () / 2., player.getX () + player.getWidth () / 2.),
+                MathHelper.clamp (from.y, player.getY (), player.getY () + player.getHeight ()),
+                MathHelper.clamp (from.z, player.getZ () - player.getWidth () / 2., player.getZ () + player.getWidth () / 2.));
     }
 
     public static void playerFriction (ClientPlayerEntity player, float friction, float stopSpeed) {
