@@ -1,6 +1,9 @@
 package jard.alchym.entities.revolver;
 
 import jard.alchym.Alchym;
+import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
+import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
+import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
 import jard.alchym.client.QuakeKnockbackable;
 import jard.alchym.helper.MathHelper;
 import jard.alchym.helper.MovementHelper;
@@ -8,12 +11,14 @@ import jard.alchym.helper.TransmutationHelper;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.MovementType;
 import net.minecraft.entity.projectile.ArrowEntity;
 import net.minecraft.entity.projectile.ProjectileEntity;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.Packet;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.util.TypeFilter;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
@@ -40,17 +45,34 @@ import java.util.List;
  *  Created by jard at 15:33 on August 23, 2021.
  ***/
 public class RevolverBulletEntity extends Entity {
+    private final RevolverDirectHitFunction direct;
+    private final RevolverSplashHitFunction splash;
+    private final RevolverBulletTravelFunction travel;
+    private final float radius;
+
+
     public final Vec3d clientStartOffset;
 
     public RevolverBulletEntity (EntityType <Entity> type, World world) {
         super (type, world);
 
+        direct = (vel, w, random, target) -> {};
+        splash = (vel, hitPos, hitNormal, visualPos, w, random, targets) -> {};
+        travel = (bullet, vel, w, random) -> {};
+        radius = 0.f;
+
         clientStartOffset = Vec3d.ZERO;
+
         kill ();
     }
 
-    public RevolverBulletEntity (World world, Vec3d spawnPos, Vec3d clientStartPos, Vec3d vel) {
+    public RevolverBulletEntity (RevolverDirectHitFunction direct, RevolverSplashHitFunction splash, RevolverBulletTravelFunction travel, float radius, World world, Vec3d spawnPos, Vec3d clientStartPos, Vec3d vel) {
         super (Alchym.content ().entities.revolverBullet, world);
+
+        this.direct = direct;
+        this.splash = splash;
+        this.travel = travel;
+        this.radius = radius;
 
         this.clientStartOffset = clientStartPos.subtract (spawnPos);
         setBoundingBox (new Box (0.D, 0.D, 0.D, 0.D, 0.D, 0.D));
@@ -68,51 +90,29 @@ public class RevolverBulletEntity extends Entity {
         if (! world.isClient)
             return;
 
-        if (random.nextDouble () < 0.5) {
-            Vec3d particlePos = this.getPos ().add (this.getVelocity ().multiply (Math.random () * 0.35)).add (getClientStartOffset (MinecraftClient.getInstance ().getTickDelta ()));
-            Vec3d particleVel = new Vec3d (0.0, 0.015, 0.0)
-                    .add (new Vec3d (random.nextDouble () - 0.5, random.nextDouble () - 0.5, random.nextDouble () - 0.5).normalize ().crossProduct (this.getVelocity ()).multiply (Math.random () * 0.015));
-            world.addParticle (ParticleTypes.SNOWFLAKE, true,
-                    particlePos.x, particlePos.y, particlePos.z,
-                    particleVel.x, particleVel.y, particleVel.z);
-        }
+        travel.apply (this.getPos ().add (getClientStartOffset (MinecraftClient.getInstance ().getTickDelta ())), this.getVelocity (), this.world, random);
 
         // Trace from player eye pos to projectile spawn position
         BlockHitResult cast = world.raycast (new RaycastContext (this.getPos (), this.getPos ().add (this.getVelocity ()), RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.ANY, this));
 
         if (cast.getType () == HitResult.Type.BLOCK) {
-            // TODO: Move all this into the bullet object
-            /*
-            float radius = 3.5f;
-            double verticalKnockback = MovementHelper.upsToSpt (755.f);
-            double horizontalKnockback = MovementHelper.upsToSpt (555.f);
-            boolean skim = true;
-            boolean icy = false;*/
-            float radius = 1.0f;
-            double verticalKnockback = MovementHelper.upsToSpt (149.29f);
-            double horizontalKnockback = MovementHelper.upsToSpt (48.75f);
-            boolean skim = false;
-            boolean icy = true;
-
-            Vec3d castPos = TransmutationHelper.bumpFromSurface (cast, 15.f);
+            Vec3d visualPos = TransmutationHelper.bumpFromSurface (cast, 15.f);
             Vec3d hitPos  = TransmutationHelper.bumpFromSurface (cast, radius);
+            Vec3d normal = new Vec3d (cast.getSide ().getUnitVector ());
 
-            for (int i = 0; i < 10; ++ i) {
-                double magnitude = 1. / (double) (i + 1);
-                Vec3d particleVel = new Vec3d (0.0, 0.005, 0.0)
-                        .add (new Vec3d (cast.getSide ().getUnitVector ()).multiply (0.125))
-                        .add (new Vec3d (
-                                random.nextDouble () - 0.5,
-                                random.nextDouble () - 0.5,
-                                random.nextDouble () - 0.5).normalize ().crossProduct (this.getVelocity ())
-                                .multiply (Math.random () * 0.15 * magnitude))
-                        .add (this.getVelocity ().multiply (0.10));
-                world.addParticle (ParticleTypes.SNOWFLAKE, true,
-                        castPos.x, castPos.y, castPos.z,
-                        particleVel.x, particleVel.y, particleVel.z);
-            }
+            List <LivingEntity> affectedEntities = world.getEntitiesByType (
+                    TypeFilter.instanceOf (LivingEntity.class),
+                    new Box (hitPos.subtract (radius, radius, radius), hitPos.add (radius, radius, radius)),
+                    livingEntity -> {
+                        boolean condition = livingEntity.squaredDistanceTo (hitPos) <= (radius * radius);
+                        if (world.isClient)
+                            condition = condition && livingEntity == MinecraftClient.getInstance ().player;
 
-            ((QuakeKnockbackable) MinecraftClient.getInstance ().player).radialKnockback (hitPos, radius, verticalKnockback, horizontalKnockback, skim, icy);
+                        return condition;
+                    });
+
+            splash.apply (getVelocity (), hitPos, normal, visualPos, world, random, affectedEntities.toArray (new LivingEntity [0]));
+
             kill ();
         }
 

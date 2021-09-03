@@ -8,6 +8,7 @@ import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.option.GameOptions;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.snooper.SnooperListener;
 import net.minecraft.util.thread.ReentrantThreadExecutor;
 import org.spongepowered.asm.mixin.Final;
@@ -45,10 +46,13 @@ public abstract class RevolverClientAttackMixin extends ReentrantThreadExecutor<
 
     @Inject (method = "doAttack", at = @At ("HEAD"), cancellable = true)
     public void hookAttack (CallbackInfo info) {
+        Vec3d eyePos = MinecraftClient.getInstance ().gameRenderer.getCamera ().isThirdPerson () ?
+                player.getEyePos () : MinecraftClient.getInstance ().gameRenderer.getCamera ().getPos ();
+
         if (attackCooldown <= 0
                 && ! player.getMainHandStack ().isEmpty ()
                 && player.getMainHandStack ().getItem () instanceof RevolverItem
-                && ((RevolverItem) player.getMainHandStack ().getItem ()).clientAttack (player, player.getMainHandStack (), MinecraftClient.getInstance ().gameRenderer.getCamera ().getPos (), player.getRotationVecClient ())) {
+                && ((RevolverItem) player.getMainHandStack ().getItem ()).clientAttack (player, player.getMainHandStack (), eyePos, player.getRotationVecClient ())) {
             attackCooldown = ((RevolverItem) player.getMainHandStack ().getItem ()).getAttackCooldown (player.getMainHandStack ());
             player.swingHand (Hand.MAIN_HAND);
 

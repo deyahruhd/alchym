@@ -2,31 +2,38 @@ package jard.alchym.items;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
+import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
+import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
 import jard.alchym.client.QuakeKnockbackable;
-import jard.alchym.client.helper.ClientRevolverHelper;
 import jard.alchym.client.helper.RenderHelper;
+import jard.alchym.entities.revolver.RevolverBulletEntity;
 import jard.alchym.helper.MathHelper;
 import jard.alchym.helper.MovementHelper;
 import jard.alchym.helper.TransmutationHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.client.render.Camera;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttribute;
 import net.minecraft.entity.attribute.EntityAttributeModifier;
 import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleEffect;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.Arm;
+import net.minecraft.util.TypeFilter;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.HitResult;
-import net.minecraft.util.math.Matrix4f;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.util.math.Vec3f;
+import net.minecraft.util.math.*;
 import net.minecraft.world.RaycastContext;
+
+import java.util.List;
 
 /***
  *  RevolverItem
@@ -123,20 +130,20 @@ public class RevolverItem extends Item {
     }
 
     public int getSwingDuration (ItemStack stack) {
-        //return 20; // rocket
-        return 5; // plasma
+        return 20; // rocket
+        //return 5; // plasma
         //return 3; // lightning
     }
 
     public int getAttackCooldown (ItemStack stack) {
-        //return 16; // rocket
-        return 2; // plasma
+        return 16; // rocket
+        //return 2; // plasma
         //return 1; // lightning
     }
 
     public boolean autoUse (ItemStack stack) {
-        //return false; // rocket
-        return true; // plasma
+        return false; // rocket
+        //return true; // plasma
         //return true; // lightning
     }
 
@@ -168,9 +175,120 @@ public class RevolverItem extends Item {
     }
 
     @Environment (EnvType.CLIENT)
-    public boolean clientAttack (PlayerEntity player, ItemStack stack, Vec3d eyePos, Vec3d aimDir) {
-        // TODO: We need to extract the relevant ammo info from the stack, then pass it to ClientRevolverHelper#handleClientRevolver
-        ClientRevolverHelper.handleClientRevolver ((ClientPlayerEntity) player, stack, player.getMainArm (), eyePos, aimDir);
+    public boolean clientAttack (PlayerEntity player, ItemStack item, Vec3d eyePos, Vec3d aimDir) {
+        // rocket
+        float projectileSpeed = MovementHelper.upsToSpt (945.f);
+        float hitscanSpeed    = MovementHelper.upsToSpt (945.f * 2.f);
+        float radius = 3.5f;
+        double verticalKnockback = MovementHelper.upsToSpt (755.f);
+        double horizontalKnockback = MovementHelper.upsToSpt (555.f);
+        boolean skim = true;
+        boolean icy = false;
+        //*/
+        /* plasma
+        float projectileSpeed = MovementHelper.upsToSpt (945.f * 3.f);
+        float hitscanSpeed    = MovementHelper.upsToSpt (945.f * 2.0f);
+        float radius = 1.0f;
+        double verticalKnockback = MovementHelper.upsToSpt (149.29f);
+        double horizontalKnockback = MovementHelper.upsToSpt (48.75f);
+        boolean skim = false;
+        boolean icy = true;
+        //*/
+        /* lightning
+        float projectileSpeed = MovementHelper.upsToSpt (975.f * 15.3f);
+        float radius = 15.3f;
+        double verticalKnockback = MovementHelper.upsToSpt (149.29f);
+        double horizontalKnockback = MovementHelper.upsToSpt (97.5f);
+        boolean skim = false;
+        boolean icy = false;
+        //*/
+
+        RevolverDirectHitFunction direct    = (vel, world, random, target) -> {
+
+        };
+        RevolverSplashHitFunction splash    = (vel, hitPos, hitNormal, visualPos, world, random, targets) -> {
+            if (targets.length == 1) {
+                ClientPlayerEntity target = (ClientPlayerEntity) targets[0];
+                ((QuakeKnockbackable) target).radialKnockback (hitPos, radius, verticalKnockback, horizontalKnockback, skim, icy);
+            }
+
+            for (int i = 0; i < 10; ++ i) {
+                double magnitude = 1. / (double) (i + 1);
+                Vec3d particleVel = new Vec3d (0.0, 0.005, 0.0)
+                        .add (hitNormal.multiply (0.125))
+                        .add (new Vec3d (
+                                random.nextDouble () - 0.5,
+                                random.nextDouble () - 0.5,
+                                random.nextDouble () - 0.5).normalize ().crossProduct (vel)
+                                .multiply (Math.random () * 0.15 * magnitude))
+                        .add (vel.multiply (0.10));
+                world.addParticle (ParticleTypes.SNOWFLAKE, true,
+                        visualPos.x, visualPos.y, visualPos.z,
+                        particleVel.x, particleVel.y, particleVel.z);
+            }
+        };
+        RevolverBulletTravelFunction travel = (pos, velocity, world, random) -> {
+            if (random.nextDouble () < 0.5) {
+                Vec3d particlePos = pos.add (velocity.multiply (Math.random () * 0.35));
+                Vec3d particleVel = new Vec3d (0.0, 0.015, 0.0)
+                        .add (new Vec3d (random.nextDouble () - 0.5, random.nextDouble () - 0.5, random.nextDouble () - 0.5).normalize ().crossProduct (velocity).multiply (Math.random () * 0.015));
+                world.addParticle (ParticleTypes.SNOWFLAKE, true,
+                        particlePos.x, particlePos.y, particlePos.z,
+                        particleVel.x, particleVel.y, particleVel.z);
+            }
+        };
+
+
+
+        Vec3d initialSpawnPos = aimDir.multiply (hitscanSpeed).add (eyePos);
+
+        // Trace from player eye pos to projectile spawn position
+        BlockHitResult cast = player.world.raycast (new RaycastContext (eyePos, initialSpawnPos, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.ANY, player));
+
+        Vec3d spawnPos = cast.getType () != HitResult.Type.MISS ? cast.getPos () : initialSpawnPos;
+        Vec3d velocity = aimDir.normalize ().multiply (projectileSpeed);
+
+        if (cast.getType () == HitResult.Type.BLOCK)
+            spawnPos = TransmutationHelper.bumpFromSurface (cast, radius);
+        if (cast.getType() != HitResult.Type.MISS) {
+            Vec3d splashPos = spawnPos;
+            Vec3d visualPos = TransmutationHelper.bumpFromSurface (cast, 15.0);
+            Vec3d normal = new Vec3d (cast.getSide ().getUnitVector ());
+
+            List <LivingEntity> affectedEntities = player.world.getEntitiesByType (
+                    TypeFilter.instanceOf (LivingEntity.class),
+                    new Box (spawnPos.subtract (radius, radius, radius), spawnPos.add (radius, radius, radius)),
+                    livingEntity -> {
+                        boolean condition = livingEntity.squaredDistanceTo (splashPos) <= (radius * radius);
+                        if (player.world.isClient)
+                            condition = condition && livingEntity == player;
+
+                        return condition;
+                    });
+
+            splash.apply (velocity, spawnPos, normal, visualPos, player.world, player.getRandom (), affectedEntities.toArray (new LivingEntity [0]));
+        } else {
+            // Calculate the eyespace bullet position
+            Vec3d bulletStart = new Vec3d (0.0, 0.165, -0.38);
+
+            Camera camera = MinecraftClient.getInstance ().gameRenderer.getCamera ();
+            Matrix4f viewTransform = RenderHelper.getViewProjectMatrix (camera, MinecraftClient.getInstance ().options.fov).peek ().getModel ();
+            viewTransform.invert ();
+            Matrix4f revolverTransform = RenderHelper.getRevolverTransform (
+                    item, player, player.getMainArm (),
+                    MinecraftClient.getInstance ().getTickDelta (),
+                    player.getHandSwingProgress (MinecraftClient.getInstance ().getTickDelta ())).peek ().getModel ();
+            Matrix4f handTransform = RenderHelper.getHandTransform (item, (ClientPlayerEntity) player, player.getMainArm ()).peek ().getModel ();
+
+            Vector4f transformedStart = new Vector4f ((float) bulletStart.x, (float) bulletStart.y, (float) bulletStart.z, 1.f);
+            transformedStart.transform (handTransform);
+            transformedStart.transform (revolverTransform);
+            transformedStart.transform (viewTransform);
+            bulletStart = new Vec3d (transformedStart.getX (), transformedStart.getY (), transformedStart.getZ ());
+
+            RevolverBulletEntity clientBullet = new RevolverBulletEntity (direct, splash, travel, radius, player.world, spawnPos, bulletStart, velocity);
+            ((ClientWorld) player.world).addEntity (player.world.random.nextInt (), clientBullet);
+        }
 
         return true;
     }
