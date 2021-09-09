@@ -17,6 +17,7 @@ public class InitAlchym {
     public InitItems items = new InitItems (this);
     public InitEntities entities = new InitEntities (this);
     public InitPackets packets = new InitPackets (this);
+    public InitParticles particles = new InitParticles (this);
     public InitSounds sounds = new InitSounds (this);
     public InitTransmutationRecipes transmutationRecipes = new InitTransmutationRecipes (this);
     public InitWorldgenFeatures features = new InitWorldgenFeatures (this);

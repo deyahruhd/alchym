@@ -167,7 +167,57 @@ public class RenderHelper {
     };
 
     private static final Random random = new Random ();
-    private static final Identifier LIGHTNING_TEXTURE = new Identifier (AlchymReference.MODID, "textures/lightning.png");
+    private static final Identifier LIGHTNING_TEXTURE = new Identifier (AlchymReference.MODID, "textures/bullet/lightning.png");
+
+    public static void axisAlignedQuad (VertexConsumer consumer,
+                                             MatrixStack stack, Vec3d startPoint, Vec3d axis, Vec3d eye, float quadWidth,
+                                             Vec3i color, int light,
+                                             float originU, float originV, float u, float v) {
+        Vec3d toEye = eye.subtract (startPoint);
+        Vec3d cross = toEye.crossProduct (axis).normalize ().multiply (quadWidth / 2.f);
+        Vec3d endPoint = startPoint.add (axis);
+
+        Vec3d corner1 = startPoint.add (cross);
+        Vec3d corner2 = endPoint.add (cross);
+        Vec3d corner3 = endPoint.subtract (cross);
+        Vec3d corner4 = startPoint.subtract (cross);
+
+        Matrix4f modelMatrix = stack.peek ().getModel ();
+
+        float u1 = originU;
+        float u2 = originU + u;
+        float v1 = originV;
+        float v2 = originV + v;
+
+        consumer.vertex (modelMatrix, (float) corner1.x, (float) corner1.y, (float) corner1.z)
+                .color (color.getX (), color.getY (), color.getZ (), 255)
+                .texture (u1, v1)
+                .overlay (OverlayTexture.DEFAULT_UV)
+                .light (light)
+                .normal (0.f, 0.f, 0.f)
+                .next ();
+        consumer.vertex (modelMatrix, (float) corner2.x, (float) corner2.y, (float) corner2.z)
+                .color (color.getX (), color.getY (), color.getZ (), 255)
+                .texture (u2, v1)
+                .overlay (OverlayTexture.DEFAULT_UV)
+                .light (light)
+                .normal (0.f, 0.f, 0.f)
+                .next ();
+        consumer.vertex (modelMatrix, (float) corner3.x, (float) corner3.y, (float) corner3.z)
+                .color (color.getX (), color.getY (), color.getZ (), 255)
+                .texture (u2, v2)
+                .overlay (OverlayTexture.DEFAULT_UV)
+                .light (light)
+                .normal (0.f, 0.f, 0.f)
+                .next ();
+        consumer.vertex (modelMatrix, (float) corner4.x, (float) corner4.y, (float) corner4.z)
+                .color (color.getX (), color.getY (), color.getZ (), 255)
+                .texture (u1, v2)
+                .overlay (OverlayTexture.DEFAULT_UV)
+                .light (light)
+                .normal (0.f, 0.f, 0.f)
+                .next ();
+    }
 
     public static void renderLightning (MatrixStack stack, Vec3d start, Vec3d end, float tickDelta) {
         boolean alternate = tickDelta > 0.85;
@@ -180,7 +230,6 @@ public class RenderHelper {
 
         VertexConsumer consumer = outlineProvider.getBuffer (RenderLayer.getEnergySwirl (LIGHTNING_TEXTURE, 0.f, 0.f));
         Matrix4f modelMatrix = stack.peek ().getModel ();
-        Matrix3f normalMatrix = stack.peek ().getNormal ();
         Matrix4f inverted = modelMatrix.copy ();
         inverted.invert ();
 
@@ -221,15 +270,8 @@ public class RenderHelper {
             Vec3d displacement = new Vec3d (random.nextDouble () - 0.5, random.nextDouble () - 0.5, random.nextDouble () - 0.5)
                     .crossProduct (dir).normalize ().multiply (stepCross)
                     .add (dir.normalize ().multiply (stepInDir));
-            Vec3d toEye = eye.subtract (currentPoint);
-            Vec3d cross = toEye.crossProduct (displacement).normalize ().multiply (0.5);
             Vec3d prevPoint = currentPoint;
             currentPoint = currentPoint.add (displacement);
-
-            Vec3d corner1 = currentPoint.add (cross);
-            Vec3d corner2 = prevPoint.add (cross);
-            Vec3d corner3 = prevPoint.subtract (cross);
-            Vec3d corner4 = currentPoint.subtract (cross);
 
             float xShift = ((float) MinecraftClient.getInstance ().player.age + tickDelta) / 15.f;
 
@@ -237,45 +279,11 @@ public class RenderHelper {
                 xShift = - xShift;
             }
 
-            float u1 = textureOrigin.x + (xShift % 2.f);
-            float u2 = textureOrigin.x + (textureSize.x * (float) (step / minStep)) + (xShift % 2.f);
-            float v1 = textureOrigin.y;
-            float v2 = textureOrigin.y + textureSize.y;
-
-            double flipChance = random.nextDouble ();
-            if (alternate) {
-                v1 = v2;
-                v2 = textureOrigin.y;
-            }
-
-            consumer.vertex (modelMatrix, (float) corner1.x, (float) corner1.y, (float) corner1.z)
-                    .color (color.getX (), color.getY (), color.getZ (), 255)
-                    .texture (u1, v1)
-                    .overlay (OverlayTexture.DEFAULT_UV)
-                    .light (15)
-                    .normal (0.f, 0.f, 0.f)
-                    .next ();
-            consumer.vertex (modelMatrix, (float) corner2.x, (float) corner2.y, (float) corner2.z)
-                    .color (color.getX (), color.getY (), color.getZ (), 255)
-                    .texture (u2, v1)
-                    .overlay (OverlayTexture.DEFAULT_UV)
-                    .light (15)
-                    .normal (0.f, 0.f, 0.f)
-                    .next ();
-            consumer.vertex (modelMatrix, (float) corner3.x, (float) corner3.y, (float) corner3.z)
-                    .color (color.getX (), color.getY (), color.getZ (), 255)
-                    .texture (u2, v2)
-                    .overlay (OverlayTexture.DEFAULT_UV)
-                    .light (15)
-                    .normal (0.f, 0.f, 0.f)
-                    .next ();
-            consumer.vertex (modelMatrix, (float) corner4.x, (float) corner4.y, (float) corner4.z)
-                    .color (color.getX (), color.getY (), color.getZ (), 255)
-                    .texture (u1, v2)
-                    .overlay (OverlayTexture.DEFAULT_UV)
-                    .light (15)
-                    .normal (0.f, 0.f, 0.f)
-                    .next ();
+            axisAlignedQuad (consumer,
+                    stack, prevPoint, displacement, eye, 0.5f,
+                    color, 15,
+                    textureOrigin.x + (xShift % 2.f), textureOrigin.y,
+                    textureSize.x * (float) (step / minStep), textureSize.y);
 
             dir = end.subtract (currentPoint);
             iteration ++;

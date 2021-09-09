@@ -137,6 +137,14 @@ public class AlchymReference {
         }
     }
 
+    public enum Particles {
+        FIRE_ROCKET_TRAIL;
+
+        public String getName () {
+            return name ().toLowerCase ();
+        }
+    }
+
     public interface IMaterial {
         String getName ();
     }

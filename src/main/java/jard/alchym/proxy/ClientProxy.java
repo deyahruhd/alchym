@@ -7,21 +7,16 @@ import jard.alchym.client.render.book.PageRenderDispatcher;
 import jard.alchym.client.render.entity.RevolverBulletEntityRenderer;
 import jard.alchym.client.render.model.ChymicalFlaskBakedModel;
 import jard.alchym.client.render.model.SpeedloaderBakedModel;
-import jard.alchym.entities.revolver.RevolverBulletEntity;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.model.*;
 import net.fabricmc.fabric.api.client.rendereregistry.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.network.ClientSidePacketRegistry;
 import net.fabricmc.fabric.api.network.PacketConsumer;
 import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.model.UnbakedModel;
 import net.minecraft.client.util.ModelIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.resource.ResourceManager;
 import net.minecraft.util.Identifier;
-
-import java.util.function.Consumer;
 
 /***
  *  ClientProxy
@@ -74,6 +69,9 @@ public class ClientProxy extends Proxy {
         });
 
         EntityRendererRegistry.INSTANCE.register (Alchym.content ().entities.revolverBullet, RevolverBulletEntityRenderer::new);
+
+        // Particles
+        Alchym.content ().particles.initialize ();
     }
 
     @Override
