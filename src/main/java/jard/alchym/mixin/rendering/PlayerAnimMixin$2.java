@@ -1,6 +1,8 @@
 package jard.alchym.mixin.rendering;
 
 import jard.alchym.client.ExtraPlayerDataAccess;
+import jard.alchym.client.MatrixStackAccess;
+import jard.alchym.client.helper.RenderHelper;
 import jard.alchym.helper.MathHelper;
 import jard.alchym.helper.MovementHelper;
 import net.fabricmc.loader.FabricLoader;
@@ -44,26 +46,7 @@ public abstract class PlayerAnimMixin$2 extends LivingEntityRenderer<AbstractCli
     public void renderHead(AbstractClientPlayerEntity player, float f, float partialTicks, MatrixStack matrixStack, VertexConsumerProvider
         vertexConsumerProvider, int i, CallbackInfo info) {
 
-        Vec3d previousVel = ((ExtraPlayerDataAccess) player).getPrevVel ();
-        Vec3d vel = MathHelper.lerp (previousVel, player.getVelocity (), partialTicks).multiply (1.0, 0.0, 1.0);
-
-        Vec3d look = player.getRotationVec (MinecraftClient.getInstance ().getTickDelta ()).multiply (1.0, 0.0, 1.0);
-        Vec3d right = vel.crossProduct (new Vec3d (0.0, 1.0, 0.0)).normalize ();
-        Vec3f axis = new Vec3f (right);
-
-        double dot = look.dotProduct (vel.normalize ());
-
-        float angle = (float) Math.tanh (vel.length () * 0.75) * -75.f;
-
-        if (player.isOnGround () && !((ExtraPlayerDataAccess) player).isJumping () &&
-                player.isSneaking () &&
-                player.getVelocity ().multiply (1.f, 0.f, 1.f).length () > MovementHelper.upsToSpt (320.f)) {
-            angle = (float) Math.tanh (vel.length () * 1.75) * -12.5f * (float) Math.abs (right.dotProduct (look));
-            angle += 22.5f * (float) dot;
-            matrixStack.translate (0.f, -0.3f + (0.1f * Math.abs (dot)), 0.f);
-        }
-
-        matrixStack.multiply(new Quaternion (axis, angle, true));
+        ((MatrixStackAccess) matrixStack).multiply (RenderHelper.getPlayerLeanTransform (player, partialTicks).peek ().getModel ());
     }
 
     @Inject (method = "render", at = @At ("RETURN"))

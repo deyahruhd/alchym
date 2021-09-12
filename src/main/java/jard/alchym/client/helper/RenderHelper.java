@@ -3,12 +3,18 @@ package jard.alchym.client.helper;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import jard.alchym.AlchymReference;
+import jard.alchym.client.ExtraPlayerDataAccess;
 import jard.alchym.client.MatrixStackAccess;
 import jard.alchym.client.MinecraftClientDataAccess;
+import jard.alchym.helper.MovementHelper;
 import jard.alchym.items.RevolverItem;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.model.ModelPart;
+import net.minecraft.client.network.AbstractClientPlayerEntity;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.*;
+import net.minecraft.client.render.entity.PlayerEntityRenderer;
+import net.minecraft.client.render.entity.model.PlayerEntityModel;
 import net.minecraft.client.render.item.ItemRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.json.ModelTransformation;
@@ -141,6 +147,50 @@ public class RenderHelper {
                 .getTransformation (arm == Arm.RIGHT ? ModelTransformation.Mode.FIRST_PERSON_RIGHT_HAND : ModelTransformation.Mode.FIRST_PERSON_LEFT_HAND)
                 .apply (arm == Arm.LEFT, stack);
         stack.translate(-0.5 * 1.12 * (arm == Arm.LEFT ? 1. : -1.), -0.5 * 1.12, -0.5 * 1.12);
+        return stack;
+    }
+
+    public static MatrixStack getThirdPersonRevolverTransform (PlayerEntity player, Arm arm) {
+        MatrixStack stack = new MatrixStack ();
+
+        PlayerEntityRenderer renderer = (PlayerEntityRenderer) (Object) MinecraftClient.getInstance ().getEntityRenderDispatcher ().getRenderer (player);
+        PlayerEntityModel <AbstractClientPlayerEntity> model = renderer.getModel ();
+        ModelPart modelArm = arm == Arm.LEFT ? model.leftArm : model.rightArm;
+
+        stack.translate (player.getX (), player.getY (), player.getZ ());
+        ((MatrixStackAccess) stack).multiply (RenderHelper.getPlayerLeanTransform (player, 1.f).peek ().getModel ());
+        stack.multiply (Vec3f.POSITIVE_Y.getDegreesQuaternion (180.f - player.bodyYaw));
+        stack.scale(-1.0F, -1.0F, 1.0F);
+        stack.translate(0.0D, -1.5010000467300415D, 0.0D);
+        modelArm.rotate (stack);
+
+        return stack;
+    }
+
+    public static MatrixStack getPlayerLeanTransform (PlayerEntity player, double partialTicks) {
+        MatrixStack stack = new MatrixStack ();
+
+        Vec3d previousVel = ((ExtraPlayerDataAccess) player).getPrevVel ();
+        Vec3d vel = jard.alchym.helper.MathHelper.lerp (previousVel, player.getVelocity (), partialTicks).multiply (1.0, 0.0, 1.0);
+
+        Vec3d look = player.getRotationVec (MinecraftClient.getInstance ().getTickDelta ()).multiply (1.0, 0.0, 1.0);
+        Vec3d right = vel.crossProduct (new Vec3d (0.0, 1.0, 0.0)).normalize ();
+        Vec3f axis = new Vec3f (right);
+
+        double dot = look.dotProduct (vel.normalize ());
+
+        float angle = (float) Math.tanh (vel.length () * 0.75) * -75.f;
+
+        if (player.isOnGround () && !((ExtraPlayerDataAccess) player).isJumping () &&
+                player.isSneaking () &&
+                player.getVelocity ().multiply (1.f, 0.f, 1.f).length () > MovementHelper.upsToSpt (320.f)) {
+            angle = (float) Math.tanh (vel.length () * 1.75) * -12.5f * (float) Math.abs (right.dotProduct (look));
+            angle += 22.5f * (float) dot;
+            stack.translate (0.f, -0.3f + (0.1f * Math.abs (dot)), 0.f);
+        }
+
+        stack.multiply (new Quaternion (axis, angle, true));
+
         return stack;
     }
 

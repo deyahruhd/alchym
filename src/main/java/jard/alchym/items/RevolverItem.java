@@ -299,24 +299,32 @@ public class RevolverItem extends Item {
 
             splash.apply (player.world, spawnPos, normal, visualPos, player.getRandom (), affectedEntities.toArray (new LivingEntity [0]));
         } else {
-            // Calculate the eyespace bullet position
-            Vec3d bulletStart = new Vec3d (0., 0.165, -0.38);
+            // Calculate the client-side bullet position
+            Vec3d bulletStart = new Vec3d (0., 0.165, - 0.38);
 
             Camera camera = MinecraftClient.getInstance ().gameRenderer.getCamera ();
-            Matrix4f viewTransform = RenderHelper.getViewProjectMatrix (camera, MinecraftClient.getInstance ().options.fov).peek ().getModel ();
-            viewTransform.invert ();
-            Matrix4f revolverTransform = RenderHelper.getRevolverTransform (
-                    item, player, player.getMainArm (),
-                    MinecraftClient.getInstance ().getTickDelta (),
-                    player.getHandSwingProgress (MinecraftClient.getInstance ().getTickDelta ())).peek ().getModel ();
-            Matrix4f handTransform = RenderHelper.getHandTransform (item, (ClientPlayerEntity) player, player.getMainArm ()).peek ().getModel ();
+            if (! camera.isThirdPerson ()) {
+                Matrix4f viewTransform = RenderHelper.getViewProjectMatrix (camera, MinecraftClient.getInstance ().options.fov).peek ().getModel ();
+                viewTransform.invert ();
+                Matrix4f revolverTransform = RenderHelper.getRevolverTransform (
+                        item, player, player.getMainArm (),
+                        MinecraftClient.getInstance ().getTickDelta (),
+                        player.getHandSwingProgress (MinecraftClient.getInstance ().getTickDelta ())).peek ().getModel ();
+                Matrix4f handTransform = RenderHelper.getHandTransform (item, (ClientPlayerEntity) player, player.getMainArm ()).peek ().getModel ();
 
-            Vector4f transformedStart = new Vector4f ((float) bulletStart.x, (float) bulletStart.y, (float) bulletStart.z, 1.f);
-            transformedStart.transform (handTransform);
-            transformedStart.transform (revolverTransform);
-            transformedStart.transform (viewTransform);
-            bulletStart = new Vec3d (transformedStart.getX (), transformedStart.getY (), transformedStart.getZ ());
+                Vector4f transformedStart = new Vector4f ((float) bulletStart.x, (float) bulletStart.y, (float) bulletStart.z, 1.f);
+                transformedStart.transform (handTransform);
+                transformedStart.transform (revolverTransform);
+                transformedStart.transform (viewTransform);
+                bulletStart = new Vec3d (transformedStart.getX (), transformedStart.getY (), transformedStart.getZ ());
+            } else {
+                bulletStart = new Vec3d (0., 1.25, -0.21);
+                Matrix4f thirdPersonTransform = RenderHelper.getThirdPersonRevolverTransform (player, player.getMainArm ()).peek ().getModel ();
 
+                Vector4f transformedStart = new Vector4f ((float) bulletStart.x, (float) bulletStart.y, (float) bulletStart.z, 1.f);
+                transformedStart.transform (thirdPersonTransform);
+                bulletStart = new Vec3d (transformedStart.getX (), transformedStart.getY (), transformedStart.getZ ());
+            }
             RevolverBulletEntity clientBullet = new RevolverBulletEntity (direct, splash, travel, radius, player, player.world, spawnPos, bulletStart, sway, velocity);
             ((ClientWorld) player.world).addEntity (player.world.random.nextInt (), clientBullet);
         }
