@@ -1,6 +1,5 @@
 package jard.alchym.init;
 
-import jard.alchym.AlchymReference;
 import net.minecraft.item.Item;
 
 /***
@@ -16,7 +15,8 @@ public class InitAlchym {
     public InitFluids fluids = new InitFluids (this);
     public InitItems items = new InitItems (this);
     public InitEntities entities = new InitEntities (this);
-    public InitPackets packets = new InitPackets (this);
+    public InitClientPackets clientPackets = new InitClientPackets (this);
+    public InitServerPackets serverPackets = new InitServerPackets (this);
     public InitParticles particles = new InitParticles (this);
     public InitSounds sounds = new InitSounds (this);
     public InitTransmutationRecipes transmutationRecipes = new InitTransmutationRecipes (this);
@@ -30,7 +30,6 @@ public class InitAlchym {
         blockEntities.initialize ();
         transmutationRecipes.initialize ();
         sounds.initialize ();
-        packets.initialize ();
         features.initialize ();
     }
 

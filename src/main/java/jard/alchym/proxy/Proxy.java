@@ -2,6 +2,9 @@ package jard.alchym.proxy;
 
 import jard.alchym.AlchymReference;
 import jard.alchym.api.book.BookPage;
+import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
+import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
+import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
 import net.fabricmc.fabric.api.network.PacketConsumer;
 import net.minecraft.client.util.math.MatrixStack;
 
@@ -17,8 +20,6 @@ import net.minecraft.client.util.math.MatrixStack;
  ***/
 public abstract class Proxy {
     public abstract void onInitialize ();
-
-    public abstract void registerPacket (AlchymReference.Packets packet, PacketConsumer action);
 
     public abstract void renderPage (MatrixStack stack, BookPage page, AlchymReference.PageInfo.BookSide side, int bookProgress);
 }

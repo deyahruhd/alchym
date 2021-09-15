@@ -1,10 +1,16 @@
 package jard.alchym.proxy;
 
+import jard.alchym.Alchym;
 import jard.alchym.AlchymReference;
 import jard.alchym.api.book.BookPage;
+import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
+import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
+import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
+import jard.alchym.helper.MathHelper;
 import net.fabricmc.fabric.api.network.PacketConsumer;
-import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
 import net.minecraft.client.util.math.MatrixStack;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageSource;
 
 import java.util.stream.Stream;
 
@@ -17,11 +23,8 @@ import java.util.stream.Stream;
 public class ServerProxy extends Proxy {
     @Override
     public void onInitialize () {
-    }
-
-    @Override
-    public void registerPacket (AlchymReference.Packets packet, PacketConsumer action) {
-        // No-op
+        // Serverbound packets
+        Alchym.content ().serverPackets.initialize ();
     }
 
     @Override

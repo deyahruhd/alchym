@@ -2,11 +2,12 @@ package jard.alchym.items;
 
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
+import io.netty.buffer.Unpooled;
 import jard.alchym.Alchym;
+import jard.alchym.AlchymReference;
 import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
 import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
 import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
-import jard.alchym.client.QuakeKnockbackable;
 import jard.alchym.client.helper.RenderHelper;
 import jard.alchym.entities.revolver.RevolverBulletEntity;
 import jard.alchym.helper.MathHelper;
@@ -14,10 +15,12 @@ import jard.alchym.helper.MovementHelper;
 import jard.alchym.helper.TransmutationHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.impl.networking.ClientSidePacketRegistryImpl;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttribute;
@@ -26,10 +29,11 @@ import net.minecraft.entity.attribute.EntityAttributes;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.particle.ParticleTypes;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.util.Arm;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.hit.BlockHitResult;
+import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 import net.minecraft.world.RaycastContext;
@@ -182,109 +186,40 @@ public class RevolverItem extends Item {
         float hitscanSpeed    = MovementHelper.upsToSpt (945.f * 2.f);
         float radius = 3.5f;
         float sway = 0.1f;
-        double verticalKnockback = MovementHelper.upsToSpt (755.f);
-        double horizontalKnockback = MovementHelper.upsToSpt (555.f);
-        boolean skim = true;
-        boolean icy = false;
+        boolean firesBullet = true;
         //*/
         /* plasma
         float projectileSpeed = MovementHelper.upsToSpt (945.f * 3.f);
         float hitscanSpeed    = MovementHelper.upsToSpt (945.f * 2.0f);
         float radius = 0.5f;
         float sway = 0.05f;
-        double verticalKnockback = MovementHelper.upsToSpt (149.29f);
-        double horizontalKnockback = MovementHelper.upsToSpt (48.75f);
-        boolean skim = false;
-        boolean icy = true;
+        boolean firesBullet = true;
         //*/
         /* lightning
-        float projectileSpeed = MovementHelper.upsToSpt (975.f * 15.3f);
-        float radius = 15.3f;
+        float projectileSpeed = 1.f;
+        float hitscanSpeed    = 24.f;
+        float radius = 0.f;
         float sway = 0.f;
-        double verticalKnockback = MovementHelper.upsToSpt (149.29f);
-        double horizontalKnockback = MovementHelper.upsToSpt (97.5f);
-        boolean skim = false;
-        boolean icy = false;
+        boolean firesBullet = false;
         //*/
 
-        RevolverDirectHitFunction direct    = (vel, world, random, target) -> {
-
-        };
-        RevolverSplashHitFunction splash    = (world, hitPos, hitNormal, visualPos, random, targets) -> {
-            if (world.isClient && targets.length == 1) {
-                ClientPlayerEntity target = (ClientPlayerEntity) targets[0];
-                ((QuakeKnockbackable) target).radialKnockback (hitPos, radius, verticalKnockback, horizontalKnockback, skim, icy);
-            }
-
-            // rocket
-            world.addParticle (ParticleTypes.EXPLOSION, true, visualPos.x, visualPos.y, visualPos.z, 0., 0., 0.);
-            //*/
-            /* plasma
-            for (int i = 0; i < 10; ++ i) {
-                double magnitude = 1. / (double) (i + 1);
-                Vec3d particleVel = new Vec3d (0.0, 0.005, 0.0)
-                        .add (hitNormal.multiply (0.125))
-                        .add (new Vec3d (
-                                random.nextDouble () - 0.5,
-                                random.nextDouble () - 0.5,
-                                random.nextDouble () - 0.5).normalize ().crossProduct (vel)
-                                .multiply (Math.random () * 0.15 * magnitude))
-                        .add (vel.multiply (0.10));
-                world.addParticle (ParticleTypes.SNOWFLAKE, true,
-                        visualPos.x, visualPos.y, visualPos.z,
-                        particleVel.x, particleVel.y, particleVel.z);
-            }
-            //*/
-        };
-        RevolverBulletTravelFunction travel = (bullet, pos, random) -> {
-            if (bullet.age > 3) {
-                final int count = Math.min (bullet.age - 3, 4);
-                Vec3d velocity = bullet.getVelocity ();
-
-                for (int i = 0; i < count; ++ i) {
-                    double subTick = (double) i / (double) count;
-                    Vec3d particlePos = pos.add (velocity.multiply (subTick - 0.9 + (subTick * subTick) * 0.5));
-                    Vec3d particleVel = new Vec3d (random.nextDouble () - 0.5,
-                            random.nextDouble () - 0.5,
-                            random.nextDouble () - 0.5)
-                            .normalize ()
-                            .crossProduct (velocity)
-                            .multiply (Math.random () * 0.015)
-                            .add (velocity.multiply (0.55));
-                    bullet.world.addParticle (Alchym.content ().particles.fireTrail, true,
-                            particlePos.x, particlePos.y, particlePos.z,
-                            particleVel.x, particleVel.y, particleVel.z);
-                }
-            }
-            //*/
-            /* rocket
-            if (random.nextDouble () < 0.5) {
-                Vec3d particlePos = pos.add (velocity.multiply (Math.random () * 0.35));
-                Vec3d particleVel = new Vec3d (0.0, 0.015, 0.0)
-                        .add (new Vec3d (random.nextDouble () - 0.5, random.nextDouble () - 0.5, random.nextDouble () - 0.5).normalize ().crossProduct (velocity).multiply (Math.random () * 0.015));
-                world.addParticle (ParticleTypes.SNOWFLAKE, true,
-                        particlePos.x, particlePos.y, particlePos.z,
-                        particleVel.x, particleVel.y, particleVel.z);
-            }
-            //*/
-        };
-
-
+        RevolverDirectHitFunction    direct = TransmutationHelper.getBulletDirect (true);
+        RevolverSplashHitFunction    splash = TransmutationHelper.getBulletSplash (true);
+        RevolverBulletTravelFunction travel = TransmutationHelper.getBulletTravel (true);
 
         Vec3d initialSpawnPos = aimDir.multiply (hitscanSpeed).add (eyePos);
 
         // Trace from player eye pos to projectile spawn position
-        BlockHitResult cast = player.world.raycast (new RaycastContext (eyePos, initialSpawnPos, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.ANY, player));
+        HitResult cast = TransmutationHelper.raycastEntitiesAndBlocks (player, player.world, eyePos, initialSpawnPos);
 
         Vec3d spawnPos = cast.getType () != HitResult.Type.MISS ? cast.getPos () : initialSpawnPos;
         Vec3d velocity = aimDir.normalize ().multiply (projectileSpeed);
 
-        if (cast.getType () == HitResult.Type.BLOCK)
-            spawnPos = TransmutationHelper.bumpFromSurface (cast, radius);
-        if (cast.getType() != HitResult.Type.MISS) {
+        if (cast.getType() == HitResult.Type.BLOCK) {
+            spawnPos = TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, radius);
             Vec3d splashPos = spawnPos;
-            Vec3d visualPos = TransmutationHelper.bumpFromSurface (cast, 15.0);
-            Vec3d normal = new Vec3d (cast.getSide ().getUnitVector ());
+            Vec3d visualPos = TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, 15.0);
+            Vec3d normal = new Vec3d (((BlockHitResult) cast).getSide ().getUnitVector ());
 
             List <LivingEntity> affectedEntities = player.world.getEntitiesByType (
                     TypeFilter.instanceOf (LivingEntity.class),
@@ -297,8 +232,24 @@ public class RevolverItem extends Item {
                         return condition;
                     });
 
-            splash.apply (player.world, spawnPos, normal, visualPos, player.getRandom (), affectedEntities.toArray (new LivingEntity [0]));
-        } else {
+            splash.apply (player, player.world, radius, spawnPos, normal, visualPos, player.getRandom (), affectedEntities.toArray (new LivingEntity [0]));
+        } else if (cast.getType () == HitResult.Type.ENTITY) {
+            LivingEntity target = (LivingEntity) ((EntityHitResult) cast).getEntity ();
+
+            List <LivingEntity> splashEntities = player.world.getEntitiesByType (
+                    TypeFilter.instanceOf (LivingEntity.class),
+                    new Box (spawnPos.subtract (2. * radius, 2. * radius, 2. * radius), spawnPos.add (2. * radius, 2. * radius, 2. * radius)),
+                    livingEntity -> {
+                        boolean condition = livingEntity.squaredDistanceTo (cast.getPos ()) <= (4. * radius * radius) && livingEntity != target;
+                        if (player.world.isClient)
+                            condition = condition && livingEntity == player;
+
+                        return condition;
+                    });
+
+            direct.apply (player, target, cast.getPos (), velocity, player.getRandom ());
+            splash.apply (player, player.world, radius, spawnPos, velocity, spawnPos, player.getRandom (), splashEntities.toArray (new LivingEntity [0]));
+        } else if (firesBullet) {
             // Calculate the client-side bullet position
             Vec3d bulletStart = new Vec3d (0., 0.165, - 0.38);
 
@@ -329,6 +280,15 @@ public class RevolverItem extends Item {
             ((ClientWorld) player.world).addEntity (player.world.random.nextInt (), clientBullet);
         }
 
+        PacketByteBuf data = new PacketByteBuf (Unpooled.buffer());
+        data.writeDouble (eyePos.x);
+        data.writeDouble (eyePos.y);
+        data.writeDouble (eyePos.z);
+        data.writeDouble (aimDir.x);
+        data.writeDouble (aimDir.y);
+        data.writeDouble (aimDir.z);
+
+        ClientSidePacketRegistryImpl.INSTANCE.sendToServer (AlchymReference.Packets.REVOLVER_ACTION.id, data);
         return true;
     }
 }

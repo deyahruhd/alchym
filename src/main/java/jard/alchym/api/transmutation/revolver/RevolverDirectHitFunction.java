@@ -2,6 +2,7 @@ package jard.alchym.api.transmutation.revolver;
 
 import jard.alchym.entities.revolver.RevolverBulletEntity;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
 
@@ -15,5 +16,5 @@ import java.util.Random;
  ***/
 @FunctionalInterface
 public interface RevolverDirectHitFunction {
-    void apply (RevolverBulletEntity bullet, LivingEntity target, Vec3d velocity, Random random);
+    void apply (PlayerEntity originator, LivingEntity target, Vec3d hitPos, Vec3d velocity, Random random);
 }
