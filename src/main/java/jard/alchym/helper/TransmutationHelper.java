@@ -12,19 +12,11 @@ import jard.alchym.api.transmutation.ReagentItem;
 import jard.alchym.api.transmutation.TransmutationAction;
 import jard.alchym.api.transmutation.impl.DryTransmutationInterface;
 import jard.alchym.api.transmutation.impl.WetTransmutationInterface;
-import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
-import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
-import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
 import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
-import jard.alchym.client.QuakeKnockbackable;
-import jard.alchym.entities.revolver.RevolverBulletEntity;
 import jard.alchym.items.MaterialItem;
 import jard.alchym.items.PhilosophersStoneItem;
-import net.minecraft.client.network.ClientPlayerEntity;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.entity.projectile.ProjectileUtil;
 import net.minecraft.fluid.Fluid;
@@ -32,16 +24,13 @@ import net.minecraft.fluid.Fluids;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvents;
 import net.minecraft.util.TypeFilter;
 import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
-import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.Pair;
 import net.minecraft.world.RaycastContext;
@@ -288,122 +277,5 @@ public class TransmutationHelper {
             return BlockHitResult.createMissed (end, null, null);
 
         return blockDist < entityDist ? blockCast : entityCast;
-    }
-
-    public static RevolverDirectHitFunction getBulletDirect (boolean isClient) {
-        double verticalKnockback = MovementHelper.upsToSpt (755.f);
-        double horizontalKnockback = MovementHelper.upsToSpt (555.f);
-        /*double verticalKnockback = MovementHelper.upsToSpt (125.f);
-        double horizontalKnockback = MovementHelper.upsToSpt (125.f);*/
-
-        if (isClient)
-            return (player, target, hitPos, vel, random) -> {};
-        else
-            return (player, target, hitPos, vel, random) -> {
-                Vec3d knockback = vel.normalize ().multiply (horizontalKnockback, verticalKnockback, horizontalKnockback);
-
-                Vec3d preVel = target.getVelocity ();
-                target.damage (DamageSource.explosion (player), 20.0f);
-                target.setVelocity (preVel);
-                target.addVelocity (knockback.x, knockback.y, knockback.z);
-                target.timeUntilRegen = 0;
-            };
-    }
-
-    public static RevolverSplashHitFunction getBulletSplash (boolean isClient) {
-        double verticalKnockback = MovementHelper.upsToSpt (755.f);
-        double horizontalKnockback = MovementHelper.upsToSpt (555.f);
-        boolean skim = true;
-        boolean icy = false;
-
-        if (isClient) {
-            return (player, world, radius, hitPos, hitNormal, visualPos, random, targets) -> {
-                if (world.isClient && targets.length == 1) {
-                    ClientPlayerEntity target = (ClientPlayerEntity) targets[0];
-                    ((QuakeKnockbackable) target).radialKnockback (hitPos, radius, verticalKnockback, horizontalKnockback, skim, icy);
-                }
-
-                // rocket
-                world.addParticle (ParticleTypes.EXPLOSION, true, visualPos.x, visualPos.y, visualPos.z, 0., 0., 0.);
-                //*/
-                /* plasma
-                for (int i = 0; i < 10; ++ i) {
-                    double magnitude = 1. / (double) (i + 1);
-                    Vec3d particleVel = new Vec3d (0.0, 0.005, 0.0)
-                            .add (hitNormal.multiply (0.125))
-                            .add (new Vec3d (
-                                    random.nextDouble () - 0.5,
-                                    random.nextDouble () - 0.5,
-                                    random.nextDouble () - 0.5).normalize ().crossProduct (vel)
-                                    .multiply (Math.random () * 0.15 * magnitude))
-                            .add (vel.multiply (0.10));
-                    world.addParticle (ParticleTypes.SNOWFLAKE, true,
-                            visualPos.x, visualPos.y, visualPos.z,
-                            particleVel.x, particleVel.y, particleVel.z);
-                }
-                //*/
-                world.playSound (hitPos.x, hitPos.y, hitPos.z, SoundEvents.ENTITY_GENERIC_EXPLODE, SoundCategory.MASTER, 8.f, 0.66f, false);
-            };
-        } else
-            return (player, world, radius, hitPos, hitNormal, visualPos, random, targets) -> {
-                for (LivingEntity target : targets) {
-                    Vec3d dir = target.getPos ().add (0.0, target.getEyeHeight (target.getPose ()), 0.0).subtract (hitPos);
-                    float dist = (float) dir.length ();
-                    float scale = MathHelper.softcorePotential (dist / radius, 10.f, 1.f);
-
-                    if (dist <= radius) {
-                        Vec3d prevVel = target.getVelocity ();
-                        target.damage (DamageSource.explosion (player), 16.f * scale);
-                        target.setVelocity (prevVel);
-                        target.timeUntilRegen = 0;
-                    }
-
-                    if (! (target instanceof PlayerEntity)) {
-                        dir = dir.normalize ().multiply (horizontalKnockback * scale, verticalKnockback * scale, horizontalKnockback * scale);
-                        target.addVelocity (dir.x * 2.f, dir.y * 2.f, dir.z * 2.f);
-                    }
-                }
-            };
-            // Lightning
-            //return (player, world, radius, hitPos, hitNormal, visualPos, random, targets) -> {};
-    }
-
-    public static RevolverBulletTravelFunction getBulletTravel (boolean isClient) {
-        if (isClient)
-            return (bullet, pos, random) -> {
-                if (bullet.age > 3) {
-                    final int count = Math.min (bullet.age - 3, 4);
-                    Vec3d velocity = bullet.getVelocity ();
-
-                    for (int i = 0; i < count; ++ i) {
-                        double subTick = (double) i / (double) count;
-                        Vec3d particlePos = pos.add (velocity.multiply (subTick - 0.9 + (subTick * subTick) * 0.5));
-                        Vec3d particleVel = new Vec3d (random.nextDouble () - 0.5,
-                                random.nextDouble () - 0.5,
-                                random.nextDouble () - 0.5)
-                                .normalize ()
-                                .crossProduct (velocity)
-                                .multiply (Math.random () * 0.015)
-                                .add (velocity.multiply (0.55));
-                        bullet.world.addParticle (Alchym.content ().particles.fireTrail, true,
-                                particlePos.x, particlePos.y, particlePos.z,
-                                particleVel.x, particleVel.y, particleVel.z);
-                    }
-                }
-                /* plasma
-                if (random.nextDouble () < 0.5) {
-                    Vec3d particlePos = pos.add (velocity.multiply (Math.random () * 0.35));
-                    Vec3d particleVel = new Vec3d (0.0, 0.015, 0.0)
-                            .add (new Vec3d (random.nextDouble () - 0.5, random.nextDouble () - 0.5, random.nextDouble () - 0.5).normalize ().crossProduct (velocity).multiply (Math.random () * 0.015));
-                    world.addParticle (ParticleTypes.SNOWFLAKE, true,
-                            particlePos.x, particlePos.y, particlePos.z,
-                            particleVel.x, particleVel.y, particleVel.z);
-                }
-                */
-            };
-            // Lightning
-            // return (bullet, pos, random) -> {};
-        else
-            return (bullet, pos, random) -> {};
     }
 }

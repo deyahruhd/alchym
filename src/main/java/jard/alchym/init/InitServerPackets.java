@@ -3,12 +3,14 @@ package jard.alchym.init;
 import jard.alchym.Alchym;
 import jard.alchym.AlchymReference;
 import jard.alchym.api.book.BookPage;
+import jard.alchym.api.transmutation.revolver.RevolverBehavior;
 import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
 import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
 import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
 import jard.alchym.client.gui.screen.GuidebookScreen;
 import jard.alchym.entities.revolver.RevolverBulletEntity;
 import jard.alchym.helper.MovementHelper;
+import jard.alchym.helper.RevolverHelper;
 import jard.alchym.helper.TransmutationHelper;
 import jard.alchym.items.AlchymicReferenceItem;
 import net.fabricmc.fabric.api.network.PacketConsumer;
@@ -80,9 +82,7 @@ public class InitServerPackets extends InitAbstractPackets {
                     boolean firesBullet = false;
                     //*/
 
-                    RevolverDirectHitFunction direct = TransmutationHelper.getBulletDirect (false);
-                    RevolverSplashHitFunction splash = TransmutationHelper.getBulletSplash (false);
-                    RevolverBulletTravelFunction travel = TransmutationHelper.getBulletTravel (false);
+                    RevolverBehavior behavior = RevolverHelper.getBulletBehavior (false);
 
                     Vec3d initialSpawnPos = aimDir.normalize ().multiply (hitscanSpeed).add (eyePos);
 
@@ -102,25 +102,19 @@ public class InitServerPackets extends InitAbstractPackets {
                                 new Box (spawnPos.subtract (2. * radius, 2. * radius, 2. * radius), spawnPos.add (2. * radius, 2. * radius, 2. * radius)),
                                 livingEntity -> livingEntity.squaredDistanceTo (splashPos) <= (4. * radius * radius));
 
-                        splash.apply (player, player.world, radius, spawnPos, normal, spawnPos, player.getRandom (), affectedEntities.toArray (new LivingEntity[0]));
+                        behavior.splash ().apply (player, player.world, radius, velocity, spawnPos, normal, spawnPos, player.getRandom (), affectedEntities.toArray (new LivingEntity[0]));
                     } else if (cast.getType () == HitResult.Type.ENTITY) {
                         LivingEntity target = (LivingEntity) ((EntityHitResult) cast).getEntity ();
 
                         List <LivingEntity> splashEntities = player.world.getEntitiesByType (
                                 TypeFilter.instanceOf (LivingEntity.class),
                                 new Box (spawnPos.subtract (2. * radius, 2. * radius, 2. * radius), spawnPos.add (2. * radius, 2. * radius, 2. * radius)),
-                                livingEntity -> {
-                                    boolean condition = livingEntity.squaredDistanceTo (cast.getPos ()) <= (4. * radius * radius) && livingEntity != target;
-                                    if (player.world.isClient)
-                                        condition = condition && livingEntity == player;
+                                livingEntity -> livingEntity.squaredDistanceTo (cast.getPos ()) <= (4. * radius * radius) && livingEntity != target );
 
-                                    return condition;
-                                });
-
-                        direct.apply (player, target, cast.getPos (), velocity, player.getRandom ());
-                        splash.apply (player, player.world, radius, spawnPos, velocity, spawnPos, player.getRandom (), splashEntities.toArray (new LivingEntity [0]));
+                        behavior.direct ().apply (player, target, cast.getPos (), velocity, player.getRandom ());
+                        behavior.splash ().apply (player, player.world, radius, velocity, spawnPos, velocity, spawnPos, player.getRandom (), splashEntities.toArray (new LivingEntity [0]));
                     } else if (firesBullet) {
-                        RevolverBulletEntity serverBullet = new RevolverBulletEntity (direct, splash, travel, radius, player, player.world, spawnPos, spawnPos, 0.f, velocity);
+                        RevolverBulletEntity serverBullet = new RevolverBulletEntity (behavior, radius, player, player.world, spawnPos, spawnPos, 0.f, velocity);
                         packetContext.getTaskQueue ().execute (() -> {
                             player.world.spawnEntity (serverBullet);
                         });

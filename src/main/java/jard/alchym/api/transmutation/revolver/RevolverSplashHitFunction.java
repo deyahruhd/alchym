@@ -15,5 +15,5 @@ import java.util.Random;
  ***/
 @FunctionalInterface
 public interface RevolverSplashHitFunction {
-    void apply (PlayerEntity originator, World world, float radius, Vec3d hitPos, Vec3d hitNormal, Vec3d visualPos, Random random, LivingEntity ... targets);
+    void apply (PlayerEntity originator, World world, float radius, Vec3d velocity, Vec3d hitPos, Vec3d hitNormal, Vec3d visualPos, Random random, LivingEntity ... targets);
 }

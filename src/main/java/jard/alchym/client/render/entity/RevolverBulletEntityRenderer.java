@@ -30,6 +30,7 @@ public class RevolverBulletEntityRenderer extends EntityRenderer<RevolverBulletE
     public void render(RevolverBulletEntity entity, float yaw, float tickDelta, MatrixStack matrices, VertexConsumerProvider vertexConsumers, int light) {
         /* main rocket */
         BakedModel model = Myron.getModel (new Identifier (AlchymReference.MODID, "models/misc/bullet/fire_rocket"));
+        //BakedModel model = Myron.getModel (new Identifier (AlchymReference.MODID, "models/misc/bullet/ice_shard"));
 
         VertexConsumer consumer = vertexConsumers.getBuffer (RenderLayer.getCutout ());
 
@@ -56,7 +57,7 @@ public class RevolverBulletEntityRenderer extends EntityRenderer<RevolverBulletE
         MatrixStack.Entry transform = matrices.peek ();
         model.getQuads (null, null, entity.world.getRandom ()).forEach (quad -> consumer.quad (transform, quad, 1.f, 1.f, 1.f, (light + 128), 1));
 
-        /* fire plumes */
+        // fire plumes
         if (entity.age > 2) {
             float plumeAmount = (float) net.minecraft.util.math.MathHelper.clamp (Math.tanh ((smoothTime - 1.f) / 4.f), 0.f, 1.f);
 
@@ -93,6 +94,7 @@ public class RevolverBulletEntityRenderer extends EntityRenderer<RevolverBulletE
                         originU, originV, 7.f / 32.f, 7.f / 256.f);
             }
         }
+        //*/
 
         matrices.pop ();
     }

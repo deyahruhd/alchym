@@ -3,15 +3,13 @@ package jard.alchym.items;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Multimap;
 import io.netty.buffer.Unpooled;
-import jard.alchym.Alchym;
 import jard.alchym.AlchymReference;
-import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
-import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
-import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
+import jard.alchym.api.transmutation.revolver.RevolverBehavior;
 import jard.alchym.client.helper.RenderHelper;
 import jard.alchym.entities.revolver.RevolverBulletEntity;
 import jard.alchym.helper.MathHelper;
 import jard.alchym.helper.MovementHelper;
+import jard.alchym.helper.RevolverHelper;
 import jard.alchym.helper.TransmutationHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -20,7 +18,6 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.world.ClientWorld;
-import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttribute;
@@ -36,7 +33,6 @@ import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.hit.EntityHitResult;
 import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
-import net.minecraft.world.RaycastContext;
 
 import java.util.List;
 
@@ -203,9 +199,7 @@ public class RevolverItem extends Item {
         boolean firesBullet = false;
         //*/
 
-        RevolverDirectHitFunction    direct = TransmutationHelper.getBulletDirect (true);
-        RevolverSplashHitFunction    splash = TransmutationHelper.getBulletSplash (true);
-        RevolverBulletTravelFunction travel = TransmutationHelper.getBulletTravel (true);
+        RevolverBehavior behavior = RevolverHelper.getBulletBehavior (true);
 
         Vec3d initialSpawnPos = aimDir.multiply (hitscanSpeed).add (eyePos);
 
@@ -232,7 +226,7 @@ public class RevolverItem extends Item {
                         return condition;
                     });
 
-            splash.apply (player, player.world, radius, spawnPos, normal, visualPos, player.getRandom (), affectedEntities.toArray (new LivingEntity [0]));
+            behavior.splash ().apply (player, player.world, radius, velocity, spawnPos, normal, visualPos, player.getRandom (), affectedEntities.toArray (new LivingEntity [0]));
         } else if (cast.getType () == HitResult.Type.ENTITY) {
             LivingEntity target = (LivingEntity) ((EntityHitResult) cast).getEntity ();
 
@@ -247,8 +241,8 @@ public class RevolverItem extends Item {
                         return condition;
                     });
 
-            direct.apply (player, target, cast.getPos (), velocity, player.getRandom ());
-            splash.apply (player, player.world, radius, spawnPos, velocity, spawnPos, player.getRandom (), splashEntities.toArray (new LivingEntity [0]));
+            behavior.direct ().apply (player, target, cast.getPos (), velocity, player.getRandom ());
+            behavior.splash ().apply (player, player.world, radius, velocity, spawnPos, velocity, spawnPos, player.getRandom (), splashEntities.toArray (new LivingEntity [0]));
         } else if (firesBullet) {
             // Calculate the client-side bullet position
             Vec3d bulletStart = new Vec3d (0., 0.165, - 0.38);
@@ -276,7 +270,7 @@ public class RevolverItem extends Item {
                 transformedStart.transform (thirdPersonTransform);
                 bulletStart = new Vec3d (transformedStart.getX (), transformedStart.getY (), transformedStart.getZ ());
             }
-            RevolverBulletEntity clientBullet = new RevolverBulletEntity (direct, splash, travel, radius, player, player.world, spawnPos, bulletStart, sway, velocity);
+            RevolverBulletEntity clientBullet = new RevolverBulletEntity (behavior, radius, player, player.world, spawnPos, bulletStart, sway, velocity);
             ((ClientWorld) player.world).addEntity (player.world.random.nextInt (), clientBullet);
         }
 

@@ -3,31 +3,20 @@ package jard.alchym.proxy;
 import jard.alchym.Alchym;
 import jard.alchym.AlchymReference;
 import jard.alchym.api.book.BookPage;
-import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
-import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
-import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
-import jard.alchym.client.QuakeKnockbackable;
 import jard.alchym.client.render.book.PageRenderDispatcher;
 import jard.alchym.client.render.entity.RevolverBulletEntityRenderer;
 import jard.alchym.client.render.model.ChymicalFlaskBakedModel;
 import jard.alchym.client.render.model.SpeedloaderBakedModel;
 import jard.alchym.entities.revolver.RevolverBulletEntity;
-import jard.alchym.helper.MovementHelper;
-import jard.alchym.helper.TransmutationHelper;
+import jard.alchym.helper.RevolverHelper;
 import net.fabricmc.fabric.api.blockrenderlayer.v1.BlockRenderLayerMap;
 import net.fabricmc.fabric.api.client.model.*;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendereregistry.v1.EntityRendererRegistry;
-import net.fabricmc.fabric.api.network.ClientSidePacketRegistry;
-import net.fabricmc.fabric.api.network.PacketConsumer;
-import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.util.ModelIdentifier;
 import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.particle.ParticleTypes;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 
@@ -107,10 +96,8 @@ public class ClientProxy extends Proxy {
             float sway = 0.1f;
 
             RevolverBulletEntity clientBullet = new RevolverBulletEntity (
-                    TransmutationHelper.getBulletDirect (true),
-                    TransmutationHelper.getBulletSplash (true),
-                    TransmutationHelper.getBulletTravel (true),
-                    radius, player, client.world, spawnPos, spawnPos, sway, spawnVel);
+                    RevolverHelper.getBulletBehavior (true),
+                    radius, player, client.world, spawnPos, spawnVel);
             client.execute (() -> {
                 assert client.world != null;
                 client.world.addEntity (client.world.random.nextInt (), clientBullet);

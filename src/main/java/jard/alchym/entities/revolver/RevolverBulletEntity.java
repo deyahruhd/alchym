@@ -3,6 +3,7 @@ package jard.alchym.entities.revolver;
 import io.netty.buffer.Unpooled;
 import jard.alchym.Alchym;
 import jard.alchym.AlchymReference;
+import jard.alchym.api.transmutation.revolver.RevolverBehavior;
 import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
 import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
 import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
@@ -35,22 +36,11 @@ import java.util.UUID;
  *  RevolverBulletEntity
  *  The revolver spellcast projectile entity.
  *
- *  Has unique behavior either on the client side or server side:
- *  - Client: Bullets spawn immediately, desynced from the server. Only applies knockback on the player.
- *            Synchronization steps are taken to make sure the projectile doesn't deviate too far from the server.
- *  - Server: Bullets spawn from a packet originating from the client. Applies knockback on non-player entities, and
- *            applies damage to all entities.
- *
- *  This is intentionally to make client-sided knockback via projectiles feel much smoother, since the Minecraft
- *  server can't be trusted to respond in real time to fire impulses.
- *
  *  Created by jard at 15:33 on August 23, 2021.
  ***/
 public class RevolverBulletEntity extends Entity {
     public static final Identifier SPAWN_PACKET = new Identifier (AlchymReference.MODID, "spawn_revolver_bullet");
-    private final RevolverDirectHitFunction direct;
-    private final RevolverSplashHitFunction splash;
-    private final RevolverBulletTravelFunction travel;
+    private final RevolverBehavior behavior;
     private final float radius;
 
     public final PlayerEntity originator;
@@ -63,9 +53,7 @@ public class RevolverBulletEntity extends Entity {
     public RevolverBulletEntity (EntityType <Entity> type, World world) {
         super (type, world);
 
-        direct = (bullet, target, hitPos, vel, random) -> {};
-        splash = (player, w, radius, hitPos, hitNormal, visualPos, random, targets) -> {};
-        travel = (bullet, pos, random) -> {};
+        behavior = RevolverBehavior.NONE;
         radius = 0.f;
 
         originator = null;
@@ -79,12 +67,14 @@ public class RevolverBulletEntity extends Entity {
         kill ();
     }
 
-    public RevolverBulletEntity (RevolverDirectHitFunction direct, RevolverSplashHitFunction splash, RevolverBulletTravelFunction travel, float radius, PlayerEntity originator, World world, Vec3d spawnPos, Vec3d clientStartPos, float clientSway, Vec3d vel) {
+    public RevolverBulletEntity (RevolverBehavior behavior, float radius, PlayerEntity originator, World world, Vec3d serverPos, Vec3d vel) {
+        this (behavior, radius, originator, world, serverPos, serverPos, 0.f, vel);
+    }
+
+    public RevolverBulletEntity (RevolverBehavior behavior, float radius, PlayerEntity originator, World world, Vec3d spawnPos, Vec3d clientStartPos, float clientSway, Vec3d vel) {
         super (Alchym.content ().entities.revolverBullet, world);
 
-        this.direct = direct;
-        this.splash = splash;
-        this.travel = travel;
+        this.behavior = behavior;
         this.radius = radius;
 
         this.originator = originator;
@@ -120,13 +110,18 @@ public class RevolverBulletEntity extends Entity {
 
     @Override
     public void tick () {
+        if (originator == null) {
+            kill ();
+            return;
+        }
+
         Vec3d forwardsComponent = getVelocity ().normalize ();
         Vec3d sideComponent = new Vec3d (0, 1, 0).crossProduct (forwardsComponent);
         Vec3d upComponent = sideComponent.crossProduct (forwardsComponent);
         Vec3d clientSway = getClientSway (0.f);
         clientSway = sideComponent.multiply (clientSway.x).add (upComponent.multiply (clientSway.y)).add (forwardsComponent.multiply (clientSway.z));
 
-        travel.apply (this, this.getPos ().add (getClientStartOffset (0.f)).subtract (clientSway), random);
+        behavior.travel ().apply (this, this.getPos ().add (getClientStartOffset (0.f)).subtract (clientSway), random);
 
         // Trace from player eye pos to projectile spawn position
         HitResult cast = TransmutationHelper.raycastEntitiesAndBlocks (originator, world, this.getPos (), this.getPos ().add (this.getVelocity ()));
@@ -146,7 +141,7 @@ public class RevolverBulletEntity extends Entity {
                         return condition;
                     });
 
-            splash.apply (originator, this.world, radius, hitPos, normal, visualPos, random, affectedEntities.toArray (new LivingEntity [0]));
+            behavior.splash ().apply (originator, this.world, radius, getVelocity (), hitPos, normal, visualPos, random, affectedEntities.toArray (new LivingEntity [0]));
             kill ();
         } else if (cast.getType () == HitResult.Type.ENTITY) {
             LivingEntity target = (LivingEntity) ((EntityHitResult) cast).getEntity ();
@@ -162,8 +157,8 @@ public class RevolverBulletEntity extends Entity {
                         return condition;
                     });
 
-            direct.apply (originator, target, cast.getPos (), getVelocity (), random);
-            splash.apply (originator, world, radius, cast.getPos (), getVelocity (), cast.getPos (), random, splashEntities.toArray (new LivingEntity [0]));
+            behavior.direct ().apply (originator, target, cast.getPos (), getVelocity (), random);
+            behavior.splash ().apply (originator, world, radius, getVelocity (), cast.getPos (), getVelocity (), cast.getPos (), random, splashEntities.toArray (new LivingEntity [0]));
             kill ();
         }
 
