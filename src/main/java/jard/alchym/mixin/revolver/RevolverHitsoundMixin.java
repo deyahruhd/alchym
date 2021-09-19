@@ -35,8 +35,8 @@ public abstract class RevolverHitsoundMixin extends Entity {
         if (source.getAttacker() != null && !this.isInvulnerableTo (source)) {
             Entity attacker = source.getAttacker ();
             if (attacker instanceof PlayerEntity && ((PlayerEntity) attacker).getMainHandStack ().getItem () instanceof RevolverItem) {
-                int id = (int) Math.ceil ((1.f - (amount / 16.0)) * 4.f);
-                id = (id > 4) ? 4 : (id < 1) ? 1 : id;
+                int id = (int) Math.ceil ((1.f - ((amount + 7.0) / 35.0)) * 4.f);
+                id = Math.min (Math.max (id, 1), 4);
                 String hitSound = "misc.hitsound." + id;
 
                 SoundEvent event = new SoundEvent (new Identifier (AlchymReference.MODID, hitSound));

@@ -404,7 +404,8 @@ public class AlchymReference {
     public enum Packets {
         OPEN_GUIDEBOOK  (new Identifier (MODID, "open_guidebook"), PacketPath.S2C),
         SYNC_GUIDEBOOK  (new Identifier (MODID, "sync_guidebook"), PacketPath.C2S),
-        REVOLVER_ACTION (new Identifier (MODID, "revolver_action"), PacketPath.C2S);
+        SERVER_REPLAY (new Identifier (MODID, "revolver_server_replay"), PacketPath.C2S),
+        CLIENT_REPLAY (new Identifier (MODID, "revolver_client_replay"), PacketPath.S2C);
 
         enum PacketPath {
             C2S,
@@ -462,5 +463,11 @@ public class AlchymReference {
 
         public static final int PAGE_WIDTH = 110;
         public static final int PAGE_HEIGHT = 164;
+    }
+
+    public enum RevolverAction {
+        SPLASH,
+        DIRECT,
+        BULLET
     }
 }

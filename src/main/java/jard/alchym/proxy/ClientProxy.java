@@ -20,6 +20,8 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Vec3d;
 
+import java.util.UUID;
+
 /***
  *  ClientProxy
  *  Client-sided proxy.
@@ -82,22 +84,25 @@ public class ClientProxy extends Proxy {
         Alchym.content ().serverPackets.initialize ();
 
         ClientPlayNetworking.registerGlobalReceiver (RevolverBulletEntity.SPAWN_PACKET, ((client, handler, data, responseSender) -> {
-            if (client.world == null)
+            if (client.world == null || client.player == null)
                 return;
 
             Vec3d spawnPos = new Vec3d (data.readDouble (), data.readDouble (), data.readDouble ());
             Vec3d spawnVel = new Vec3d (data.readDouble (), data.readDouble (), data.readDouble ());
-            PlayerEntity player = client.world.getPlayerByUuid (data.readUuid ());
+            UUID playerID = data.readUuid ();
+            UUID bulletID = data.readUuid ();
 
-            if (player == client.player)
+            if (playerID.equals (client.player.getUuid ()))
                 return;
 
             float radius = 3.5f;
             float sway = 0.1f;
 
             RevolverBulletEntity clientBullet = new RevolverBulletEntity (
+                    client.world,
                     RevolverHelper.getBulletBehavior (true),
-                    radius, player, client.world, spawnPos, spawnVel);
+                    client.world.getPlayerByUuid (playerID), bulletID,
+                    spawnVel, spawnPos, radius);
             client.execute (() -> {
                 assert client.world != null;
                 client.world.addEntity (client.world.random.nextInt (), clientBullet);

@@ -2,6 +2,7 @@ package jard.alchym.helper;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
 
@@ -30,11 +31,11 @@ public class MovementHelper {
         player.addVelocity (wishdir.x, wishdir.y, wishdir.z);
     }
 
-    public static Vec3d getKnockbackTo (ClientPlayerEntity player, Vec3d from, double radius) {
+    public static Vec3d getKnockbackTo (Entity entity, Vec3d from) {
         return new Vec3d (
-                MathHelper.clamp (from.x, player.getX () - player.getWidth () / 2., player.getX () + player.getWidth () / 2.),
-                MathHelper.clamp (from.y, player.getY (), player.getY () + player.getHeight ()),
-                MathHelper.clamp (from.z, player.getZ () - player.getWidth () / 2., player.getZ () + player.getWidth () / 2.));
+                MathHelper.clamp (from.x, entity.getX () - entity.getWidth () / 2., entity.getX () + entity.getWidth () / 2.),
+                MathHelper.clamp (from.y, entity.getY (), entity.getY () + entity.getHeight ()),
+                MathHelper.clamp (from.z, entity.getZ () - entity.getWidth () / 2., entity.getZ () + entity.getWidth () / 2.));
     }
 
     public static void playerFriction (ClientPlayerEntity player, float friction, float stopSpeed) {

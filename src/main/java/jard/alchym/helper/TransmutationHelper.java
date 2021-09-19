@@ -15,6 +15,7 @@ import jard.alchym.api.transmutation.impl.WetTransmutationInterface;
 import jard.alchym.blocks.blockentities.ChymicalContainerBlockEntity;
 import jard.alchym.items.MaterialItem;
 import jard.alchym.items.PhilosophersStoneItem;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.ItemEntity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -243,15 +244,15 @@ public class TransmutationHelper {
         return cast.getPos ().add(normal);
     }
 
-    public static HitResult raycastEntitiesAndBlocks (PlayerEntity player, World world, Vec3d start, Vec3d end) {
-        HitResult blockCast = world.raycast (new RaycastContext (start, end, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.ANY, player));
+    public static HitResult raycastEntitiesAndBlocks (Entity originator, World world, Vec3d start, Vec3d end) {
+        HitResult blockCast = world.raycast (new RaycastContext (start, end, RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.ANY, originator));
         HitResult entityCast = null;
         Box entitySearch = new Box (start, end).expand (0.5, 0.5, 0.5);
 
         List <LivingEntity> list = world.getEntitiesByType (
                 TypeFilter.instanceOf (LivingEntity.class),
                 entitySearch,
-                livingEntity -> ! livingEntity.equals (player)
+                livingEntity -> ! livingEntity.equals (originator)
         );
 
         float closestEntityCast = Float.POSITIVE_INFINITY;

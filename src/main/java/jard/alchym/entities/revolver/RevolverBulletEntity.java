@@ -8,8 +8,12 @@ import jard.alchym.api.transmutation.revolver.RevolverBulletTravelFunction;
 import jard.alchym.api.transmutation.revolver.RevolverDirectHitFunction;
 import jard.alchym.api.transmutation.revolver.RevolverSplashHitFunction;
 import jard.alchym.helper.MathHelper;
+import jard.alchym.helper.MovementHelper;
+import jard.alchym.helper.RevolverHelper;
 import jard.alchym.helper.TransmutationHelper;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.impl.networking.ClientSidePacketRegistryImpl;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.EntityType;
@@ -43,7 +47,8 @@ public class RevolverBulletEntity extends Entity {
     private final RevolverBehavior behavior;
     private final float radius;
 
-    public final PlayerEntity originator;
+    public final PlayerEntity owner;
+    private UUID bulletId;
 
     private final float swayIntensity;
     public final int seed;
@@ -56,7 +61,8 @@ public class RevolverBulletEntity extends Entity {
         behavior = RevolverBehavior.NONE;
         radius = 0.f;
 
-        originator = null;
+        owner = null;
+        bulletId = null;
 
         swayIntensity = 0.f;
         seed = 0;
@@ -67,17 +73,18 @@ public class RevolverBulletEntity extends Entity {
         kill ();
     }
 
-    public RevolverBulletEntity (RevolverBehavior behavior, float radius, PlayerEntity originator, World world, Vec3d serverPos, Vec3d vel) {
-        this (behavior, radius, originator, world, serverPos, serverPos, 0.f, vel);
+    public RevolverBulletEntity (World world, RevolverBehavior behavior, PlayerEntity owner, UUID bulletId, Vec3d vel, Vec3d spawnPos, float radius) {
+        this (world, behavior, owner, bulletId, vel, spawnPos, spawnPos, radius, 0.f);
     }
 
-    public RevolverBulletEntity (RevolverBehavior behavior, float radius, PlayerEntity originator, World world, Vec3d spawnPos, Vec3d clientStartPos, float clientSway, Vec3d vel) {
+    public RevolverBulletEntity (World world, RevolverBehavior behavior, PlayerEntity owner, UUID bulletId, Vec3d vel, Vec3d spawnPos, Vec3d clientStartPos, float radius, float clientSway) {
         super (Alchym.content ().entities.revolverBullet, world);
 
         this.behavior = behavior;
         this.radius = radius;
 
-        this.originator = originator;
+        this.owner = owner;
+        this.bulletId = bulletId;
 
         seed = world.random.nextInt (100000);
         swayIntensity = clientSway;
@@ -87,6 +94,10 @@ public class RevolverBulletEntity extends Entity {
         setBoundingBox (new Box (0.D, 0.D, 0.D, 0.D, 0.D, 0.D));
         setPos (spawnPos.x, spawnPos.y, spawnPos.z);
         setVelocity (vel);
+
+        if (bulletId == null) {
+            kill ();
+        }
     }
 
     public Vec3d getClientStartOffset (float tickDelta) {
@@ -108,12 +119,19 @@ public class RevolverBulletEntity extends Entity {
                 0.005 * Math.sin (smoothAge * 4.f));
     }
 
+    public UUID getBulletId () {
+        return bulletId;
+    }
+
     @Override
     public void tick () {
-        if (originator == null) {
-            kill ();
-            return;
-        }
+        boolean isOrphaned = ! world.isClient && (owner == null || world.getPlayerByUuid (owner.getUuid ()) == null);
+
+        boolean shouldDoBehavior =
+                world.isClient || isOrphaned;
+
+        boolean shouldReplay =
+                world.isClient && owner == MinecraftClient.getInstance ().player;
 
         Vec3d forwardsComponent = getVelocity ().normalize ();
         Vec3d sideComponent = new Vec3d (0, 1, 0).crossProduct (forwardsComponent);
@@ -123,42 +141,50 @@ public class RevolverBulletEntity extends Entity {
 
         behavior.travel ().apply (this, this.getPos ().add (getClientStartOffset (0.f)).subtract (clientSway), random);
 
+        PacketByteBuf data = null;
+
         // Trace from player eye pos to projectile spawn position
-        HitResult cast = TransmutationHelper.raycastEntitiesAndBlocks (originator, world, this.getPos (), this.getPos ().add (this.getVelocity ()));
+        HitResult cast = TransmutationHelper.raycastEntitiesAndBlocks (owner == null ? this : owner, world, this.getPos (), this.getPos ().add (this.getVelocity ()));
         if (cast.getType() == HitResult.Type.BLOCK) {
-            Vec3d visualPos = TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, 15.f);
-            Vec3d hitPos  = TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, radius);
-            Vec3d normal = new Vec3d (((BlockHitResult) cast).getSide ().getUnitVector ());
+            if (shouldDoBehavior) {
+                data = PacketByteBufs.create ();
+                Vec3d hitPos  = TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, radius);
+                List <LivingEntity> entitiesInRange = RevolverHelper.getEntitiesInRange (world, null, hitPos, radius);
 
-            List <LivingEntity> affectedEntities = world.getEntitiesByType (
-                    TypeFilter.instanceOf (LivingEntity.class),
-                    new Box (hitPos.subtract (2. * radius, 2. * radius, 2. * radius), hitPos.add (2. * radius, 2. * radius, 2. * radius)),
-                    livingEntity -> {
-                        boolean condition = livingEntity.squaredDistanceTo (hitPos) <= (4. * radius * radius);
-                        if (world.isClient)
-                            condition = condition && livingEntity == MinecraftClient.getInstance ().player;
+                RevolverHelper.playSplash (behavior.splash (),
+                        bulletId,
+                        owner, world,
+                        entitiesInRange,
+                        hitPos,
+                        getVelocity (),
+                        TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, 15.f),
+                        new Vec3d (((BlockHitResult) cast).getSide ().getUnitVector ()),
+                        radius, data);
 
-                        return condition;
-                    });
+                if (shouldReplay)
+                    ClientSidePacketRegistryImpl.INSTANCE.sendToServer (AlchymReference.Packets.SERVER_REPLAY.id, data);
+            }
 
-            behavior.splash ().apply (originator, this.world, radius, getVelocity (), hitPos, normal, visualPos, random, affectedEntities.toArray (new LivingEntity [0]));
             kill ();
         } else if (cast.getType () == HitResult.Type.ENTITY) {
-            LivingEntity target = (LivingEntity) ((EntityHitResult) cast).getEntity ();
+            if (shouldDoBehavior) {
+                data = PacketByteBufs.create ();
 
-            List <LivingEntity> splashEntities = originator.world.getEntitiesByType (
-                    TypeFilter.instanceOf (LivingEntity.class),
-                    new Box (cast.getPos ().subtract (2. * radius, 2. * radius, 2. * radius), cast.getPos ().add (2. * radius, 2. * radius, 2. * radius)),
-                    livingEntity -> {
-                        boolean condition = livingEntity.squaredDistanceTo (cast.getPos ()) <= (4. * radius * radius) && livingEntity != target;
-                        if (world.isClient)
-                            condition = condition && livingEntity == MinecraftClient.getInstance ().player;
+                LivingEntity target = (LivingEntity) ((EntityHitResult) cast).getEntity ();
+                List <LivingEntity> entitiesInRange = RevolverHelper.getEntitiesInRange (world, target, cast.getPos (), radius);
 
-                        return condition;
-                    });
+                RevolverHelper.playDirect (
+                        behavior.direct (),
+                        behavior.splash (),
+                        bulletId,
+                        owner, world,
+                        target, entitiesInRange,
+                        cast.getPos (), getVelocity (), radius, data);
 
-            behavior.direct ().apply (originator, target, cast.getPos (), getVelocity (), random);
-            behavior.splash ().apply (originator, world, radius, getVelocity (), cast.getPos (), getVelocity (), cast.getPos (), random, splashEntities.toArray (new LivingEntity [0]));
+                if (shouldReplay)
+                    ClientSidePacketRegistryImpl.INSTANCE.sendToServer (AlchymReference.Packets.SERVER_REPLAY.id, data);
+            }
+
             kill ();
         }
 
@@ -175,12 +201,12 @@ public class RevolverBulletEntity extends Entity {
 
     @Override
     protected void readCustomDataFromNbt (NbtCompound nbt) {
-
+        bulletId = nbt.getUuid ("BulletID");
     }
 
     @Override
     protected void writeCustomDataToNbt (NbtCompound nbt) {
-
+        nbt.putUuid ("BulletID", bulletId);
     }
 
     @Override
@@ -192,7 +218,8 @@ public class RevolverBulletEntity extends Entity {
         data.writeDouble (getVelocity ().x);
         data.writeDouble (getVelocity ().y);
         data.writeDouble (getVelocity ().z);
-        data.writeUuid (originator == null ? new UUID (0, 0) : originator.getUuid ());
+        data.writeUuid (owner == null ? new UUID (0, 0) : owner.getUuid ());
+        data.writeUuid (bulletId);
 
         return ServerPlayNetworking.createS2CPacket (SPAWN_PACKET, data);
     }

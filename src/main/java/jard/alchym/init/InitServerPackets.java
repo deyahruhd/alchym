@@ -15,10 +15,13 @@ import jard.alchym.helper.TransmutationHelper;
 import jard.alchym.items.AlchymicReferenceItem;
 import net.fabricmc.fabric.api.network.PacketConsumer;
 import net.fabricmc.fabric.api.network.ServerSidePacketRegistry;
+import net.fabricmc.fabric.impl.networking.ServerSidePacketRegistryImpl;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.PacketByteBuf;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.LiteralText;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
@@ -29,8 +32,11 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
+import net.minecraft.world.World;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Stream;
 
 /***
@@ -57,67 +63,113 @@ public class InitServerPackets extends InitAbstractPackets {
                     AlchymicReferenceItem.putPage (book, data.readIdentifier ());
                 });
 
-        PACKET_BEHAVIOR.put (AlchymReference.Packets.REVOLVER_ACTION.id,
+        PACKET_BEHAVIOR.put (AlchymReference.Packets.SERVER_REPLAY.id,
                 (packetContext, data) -> {
-                    Vec3d eyePos = new Vec3d (data.readDouble (), data.readDouble (), data.readDouble ());
-                    Vec3d aimDir = new Vec3d (data.readDouble (), data.readDouble (), data.readDouble ());
-                    PlayerEntity player = packetContext.getPlayer ();
+                    if (packetContext.getPlayer ().isSpectator ())
+                        return;
 
                     // rocket
                     float projectileSpeed = MovementHelper.upsToSpt (945.f);
                     float hitscanSpeed    = MovementHelper.upsToSpt (945.f * 2.f);
                     float radius = 3.5f;
+                    float sway = 0.1f;
                     boolean firesBullet = true;
                     //*/
                     /* plasma
                     float projectileSpeed = MovementHelper.upsToSpt (945.f * 3.f);
                     float hitscanSpeed    = MovementHelper.upsToSpt (945.f * 2.0f);
                     float radius = 0.5f;
+                    float sway = 0.05f;
                     boolean firesBullet = true;
                     //*/
                     /* lightning
                     float projectileSpeed = 1.f;
-                    float hitscanSpeed = 24.f;
+                    float hitscanSpeed    = 32.f;
                     float radius = 0.f;
+                    float sway = 0.f;
                     boolean firesBullet = false;
                     //*/
 
-                    RevolverBehavior behavior = RevolverHelper.getBulletBehavior (false);
+                    PlayerEntity player = packetContext.getPlayer ();
+                    ServerWorld world = (ServerWorld) player.world;
+                    RevolverBehavior behavior = RevolverHelper.getBulletBehavior (world.isClient);
 
-                    Vec3d initialSpawnPos = aimDir.normalize ().multiply (hitscanSpeed).add (eyePos);
+                    AlchymReference.RevolverAction action = data.readEnumConstant (AlchymReference.RevolverAction.class);
+                    UUID bulletId = data.readBoolean () ? data.readUuid () : null;
+                    Vec3d spawnPos = new Vec3d (data.readDouble (), data.readDouble (), data.readDouble ());
+                    Vec3d velocity = new Vec3d (data.readDouble (), data.readDouble (), data.readDouble ())
+                            .normalize ().multiply (projectileSpeed);
 
-                    // Trace from player eye pos to projectile spawn position
-                    HitResult cast = TransmutationHelper.raycastEntitiesAndBlocks (player, player.world, eyePos, initialSpawnPos);
+                    switch (action) {
+                        case SPLASH -> {
+                            List <RevolverBulletEntity> bullets = (List <RevolverBulletEntity>) world.getEntitiesByType (
+                                    TypeFilter.instanceOf (RevolverBulletEntity.class),
+                                    bullet -> bullet.getBulletId ().equals (bulletId));
+                            if (bullets.size () != 1)
+                                return;
+                            if (bullets.get (0).owner != player)
+                                return;
 
-                    Vec3d spawnPos = cast.getType () != HitResult.Type.MISS ? cast.getPos () : initialSpawnPos;
-                    Vec3d velocity = aimDir.normalize ().multiply (projectileSpeed);
+                            Vec3d normal = new Vec3d (data.readDouble (), data.readDouble (), data.readDouble ());
 
-                    if (cast.getType () == HitResult.Type.BLOCK) {
-                        spawnPos = TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, radius);
-                        Vec3d splashPos = spawnPos;
-                        Vec3d normal = new Vec3d (((BlockHitResult) cast).getSide ().getUnitVector ());
+                            List<LivingEntity> entitiesInRange = RevolverHelper.validateEntitiesInRange (world, data, spawnPos, radius);
 
-                        List <LivingEntity> affectedEntities = player.world.getEntitiesByType (
-                                TypeFilter.instanceOf (LivingEntity.class),
-                                new Box (spawnPos.subtract (2. * radius, 2. * radius, 2. * radius), spawnPos.add (2. * radius, 2. * radius, 2. * radius)),
-                                livingEntity -> livingEntity.squaredDistanceTo (splashPos) <= (4. * radius * radius));
+                            RevolverHelper.playSplash (
+                                    behavior.splash (),
+                                    bulletId,
+                                    player, world,
+                                    entitiesInRange,
+                                    spawnPos,
+                                    velocity,
+                                    spawnPos,
+                                    normal,
+                                    radius, data);
 
-                        behavior.splash ().apply (player, player.world, radius, velocity, spawnPos, normal, spawnPos, player.getRandom (), affectedEntities.toArray (new LivingEntity[0]));
-                    } else if (cast.getType () == HitResult.Type.ENTITY) {
-                        LivingEntity target = (LivingEntity) ((EntityHitResult) cast).getEntity ();
+                            if (bulletId == null)
+                                for (PlayerEntity client : world.getPlayers (client -> client != player)) {
+                                    ServerSidePacketRegistryImpl.INSTANCE.sendToPlayer (client, AlchymReference.Packets.CLIENT_REPLAY.id, data);
+                                }
+                        }
+                        case DIRECT -> {
+                            List <RevolverBulletEntity> bullets = (List <RevolverBulletEntity>) world.getEntitiesByType (
+                                    TypeFilter.instanceOf (RevolverBulletEntity.class),
+                                    bullet -> bullet.getBulletId ().equals (bulletId));
+                            if (bullets.size () != 1)
+                                return;
+                            if (bullets.get (0).owner != player)
+                                return;
 
-                        List <LivingEntity> splashEntities = player.world.getEntitiesByType (
-                                TypeFilter.instanceOf (LivingEntity.class),
-                                new Box (spawnPos.subtract (2. * radius, 2. * radius, 2. * radius), spawnPos.add (2. * radius, 2. * radius, 2. * radius)),
-                                livingEntity -> livingEntity.squaredDistanceTo (cast.getPos ()) <= (4. * radius * radius) && livingEntity != target );
+                            LivingEntity target = (LivingEntity) world.getEntity (data.readUuid ());
 
-                        behavior.direct ().apply (player, target, cast.getPos (), velocity, player.getRandom ());
-                        behavior.splash ().apply (player, player.world, radius, velocity, spawnPos, velocity, spawnPos, player.getRandom (), splashEntities.toArray (new LivingEntity [0]));
-                    } else if (firesBullet) {
-                        RevolverBulletEntity serverBullet = new RevolverBulletEntity (behavior, radius, player, player.world, spawnPos, spawnPos, 0.f, velocity);
-                        packetContext.getTaskQueue ().execute (() -> {
-                            player.world.spawnEntity (serverBullet);
-                        });
+                            if (target == null)
+                                return;
+
+                            List<LivingEntity> entitiesInRange = RevolverHelper.validateEntitiesInRange (world, data, spawnPos, radius);
+
+                            RevolverHelper.playDirect (
+                                    behavior.direct (),
+                                    behavior.splash (),
+                                    bulletId,
+                                    player, world,
+                                    target, entitiesInRange,
+                                    spawnPos, velocity, radius, data);
+
+                            if (bulletId == null)
+                                for (PlayerEntity client : world.getPlayers (client -> client != player)) {
+                                    ServerSidePacketRegistryImpl.INSTANCE.sendToPlayer (client, AlchymReference.Packets.CLIENT_REPLAY.id, data);
+                                }
+                        }
+                        case BULLET -> {
+                            if (! firesBullet)
+                                return;
+
+                            RevolverBulletEntity serverBullet = new RevolverBulletEntity (
+                                    player.world,
+                                    behavior,
+                                    player, bulletId,
+                                    velocity, spawnPos, radius);
+                            packetContext.getTaskQueue ().execute (() -> player.world.spawnEntity (serverBullet));
+                        }
                     }
                 });
     }

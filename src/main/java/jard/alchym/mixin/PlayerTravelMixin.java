@@ -179,7 +179,7 @@ public abstract class PlayerTravelMixin extends LivingEntity implements QuakeKno
     @Override
     public void radialKnockback (Vec3d from, float radius, double verticalStrength, double horizontalStrength, boolean skim, boolean icy) {
         Vec3d dir = getPos ().add (0.0, getEyeHeight (getPose ()), 0.0).subtract (from);
-        float dist = (float) MovementHelper.getKnockbackTo ((ClientPlayerEntity) (Object) this, from, radius).subtract (from).length ();
+        float dist = (float) MovementHelper.getKnockbackTo ((ClientPlayerEntity) (Object) this, from).subtract (from).length ();
 
         double scale = MathHelper.softcorePotential (dist / radius, 10.f, 1.f);
 

@@ -13,11 +13,13 @@ import jard.alchym.helper.RevolverHelper;
 import jard.alchym.helper.TransmutationHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.fabricmc.fabric.api.networking.v1.PacketByteBufs;
 import net.fabricmc.fabric.impl.networking.ClientSidePacketRegistryImpl;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.network.ClientPlayerEntity;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.world.ClientWorld;
+import net.minecraft.entity.Entity;
 import net.minecraft.entity.EquipmentSlot;
 import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.attribute.EntityAttribute;
@@ -35,6 +37,7 @@ import net.minecraft.util.hit.HitResult;
 import net.minecraft.util.math.*;
 
 import java.util.List;
+import java.util.UUID;
 
 /***
  *  RevolverItem
@@ -177,6 +180,9 @@ public class RevolverItem extends Item {
 
     @Environment (EnvType.CLIENT)
     public boolean clientAttack (PlayerEntity player, ItemStack item, Vec3d eyePos, Vec3d aimDir) {
+        if (player.isSpectator ())
+            return false;
+
         // rocket
         float projectileSpeed = MovementHelper.upsToSpt (945.f);
         float hitscanSpeed    = MovementHelper.upsToSpt (945.f * 2.f);
@@ -193,11 +199,13 @@ public class RevolverItem extends Item {
         //*/
         /* lightning
         float projectileSpeed = 1.f;
-        float hitscanSpeed    = 24.f;
+        float hitscanSpeed    = 32.f;
         float radius = 0.f;
         float sway = 0.f;
         boolean firesBullet = false;
         //*/
+
+        PacketByteBuf data = null;
 
         RevolverBehavior behavior = RevolverHelper.getBulletBehavior (true);
 
@@ -207,43 +215,36 @@ public class RevolverItem extends Item {
         HitResult cast = TransmutationHelper.raycastEntitiesAndBlocks (player, player.world, eyePos, initialSpawnPos);
 
         Vec3d spawnPos = cast.getType () != HitResult.Type.MISS ? cast.getPos () : initialSpawnPos;
-        Vec3d velocity = aimDir.normalize ().multiply (projectileSpeed);
+        Vec3d velocity = aimDir.multiply (projectileSpeed);
 
         if (cast.getType() == HitResult.Type.BLOCK) {
-            spawnPos = TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, radius);
-            Vec3d splashPos = spawnPos;
-            Vec3d visualPos = TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, 15.0);
-            Vec3d normal = new Vec3d (((BlockHitResult) cast).getSide ().getUnitVector ());
+            data = PacketByteBufs.create ();
+            List <LivingEntity> entitiesInRange = RevolverHelper.getEntitiesInRange (player.world, null, TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, radius), radius);
 
-            List <LivingEntity> affectedEntities = player.world.getEntitiesByType (
-                    TypeFilter.instanceOf (LivingEntity.class),
-                    new Box (spawnPos.subtract (2. * radius, 2. * radius, 2. * radius), spawnPos.add (2. * radius, 2. * radius, 2. * radius)),
-                    livingEntity -> {
-                        boolean condition = livingEntity.squaredDistanceTo (splashPos) <= (4. * radius * radius);
-                        if (player.world.isClient)
-                            condition = condition && livingEntity == player;
-
-                        return condition;
-                    });
-
-            behavior.splash ().apply (player, player.world, radius, velocity, spawnPos, normal, visualPos, player.getRandom (), affectedEntities.toArray (new LivingEntity [0]));
+            RevolverHelper.playSplash (
+                    behavior.splash (),
+                    null,
+                    player, player.world,
+                    entitiesInRange,
+                    TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, radius),
+                    velocity,
+                    TransmutationHelper.bumpFromSurface ((BlockHitResult) cast, 15.0),
+                    new Vec3d (((BlockHitResult) cast).getSide ().getUnitVector ()),
+                    radius, data);
         } else if (cast.getType () == HitResult.Type.ENTITY) {
+            data = PacketByteBufs.create ();
             LivingEntity target = (LivingEntity) ((EntityHitResult) cast).getEntity ();
+            List <LivingEntity> entitiesInRange = RevolverHelper.getEntitiesInRange (player.world, target, cast.getPos (), radius);
 
-            List <LivingEntity> splashEntities = player.world.getEntitiesByType (
-                    TypeFilter.instanceOf (LivingEntity.class),
-                    new Box (spawnPos.subtract (2. * radius, 2. * radius, 2. * radius), spawnPos.add (2. * radius, 2. * radius, 2. * radius)),
-                    livingEntity -> {
-                        boolean condition = livingEntity.squaredDistanceTo (cast.getPos ()) <= (4. * radius * radius) && livingEntity != target;
-                        if (player.world.isClient)
-                            condition = condition && livingEntity == player;
-
-                        return condition;
-                    });
-
-            behavior.direct ().apply (player, target, cast.getPos (), velocity, player.getRandom ());
-            behavior.splash ().apply (player, player.world, radius, velocity, spawnPos, velocity, spawnPos, player.getRandom (), splashEntities.toArray (new LivingEntity [0]));
+            RevolverHelper.playDirect (
+                    behavior.direct (),
+                    behavior.splash (),
+                    null,
+                    player, player.world,
+                    target, entitiesInRange,
+                    cast.getPos (), velocity, radius, data);
         } else if (firesBullet) {
+            data = PacketByteBufs.create ();
             // Calculate the client-side bullet position
             Vec3d bulletStart = new Vec3d (0., 0.165, - 0.38);
 
@@ -270,19 +271,31 @@ public class RevolverItem extends Item {
                 transformedStart.transform (thirdPersonTransform);
                 bulletStart = new Vec3d (transformedStart.getX (), transformedStart.getY (), transformedStart.getZ ());
             }
-            RevolverBulletEntity clientBullet = new RevolverBulletEntity (behavior, radius, player, player.world, spawnPos, bulletStart, sway, velocity);
-            ((ClientWorld) player.world).addEntity (player.world.random.nextInt (), clientBullet);
+
+            UUID bulletID = UUID.randomUUID ();
+
+            RevolverBulletEntity clientBullet = new RevolverBulletEntity (player.world, behavior, player, bulletID, velocity, spawnPos, bulletStart, radius, sway);
+            ((ClientWorld) player.world).addEntity (clientBullet.getId (), clientBullet);
+
+            // write data for server replay
+            data.writeEnumConstant (AlchymReference.RevolverAction.BULLET);
+            // bullet ID exists
+            data.writeBoolean (true);
+            // bullet ID
+            data.writeUuid (bulletID);
+            // spawn position
+            data.writeDouble (spawnPos.x);
+            data.writeDouble (spawnPos.y);
+            data.writeDouble (spawnPos.z);
+            // player aim direction (to calculate velocity)
+            data.writeDouble (aimDir.x);
+            data.writeDouble (aimDir.y);
+            data.writeDouble (aimDir.z);
         }
 
-        PacketByteBuf data = new PacketByteBuf (Unpooled.buffer());
-        data.writeDouble (eyePos.x);
-        data.writeDouble (eyePos.y);
-        data.writeDouble (eyePos.z);
-        data.writeDouble (aimDir.x);
-        data.writeDouble (aimDir.y);
-        data.writeDouble (aimDir.z);
+        if (data != null)
+            ClientSidePacketRegistryImpl.INSTANCE.sendToServer (AlchymReference.Packets.SERVER_REPLAY.id, data);
 
-        ClientSidePacketRegistryImpl.INSTANCE.sendToServer (AlchymReference.Packets.REVOLVER_ACTION.id, data);
         return true;
     }
 }
